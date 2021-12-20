@@ -24,7 +24,7 @@
 package com.v2gclarity.risev2g.shared.enumerations;
 
 import java.util.Arrays;
-
+import java.util.HashMap;
 import com.v2gclarity.risev2g.shared.utils.ByteUtils;
 
 

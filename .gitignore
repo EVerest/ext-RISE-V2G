@@ -20,3 +20,4 @@ RISE-V2G-SECC/moCertChain.p12
 /.recommenders/
 .idea
 *.iml
+workspace.yaml

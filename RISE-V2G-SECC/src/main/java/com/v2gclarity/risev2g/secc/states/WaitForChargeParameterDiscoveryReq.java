@@ -45,6 +45,10 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SAScheduleListType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+// *** EVerest code end ***
+
 public class WaitForChargeParameterDiscoveryReq extends ServerState {
 
 	private ChargeParameterDiscoveryResType chargeParameterDiscoveryRes;
@@ -63,6 +67,38 @@ public class WaitForChargeParameterDiscoveryReq extends ServerState {
 					(ChargeParameterDiscoveryReqType) v2gMessageReq.getBody().getBodyElement().getValue();
 			
 			if (isResponseCodeOK(chargeParameterDiscoveryReq)) {
+                
+                
+                // *** EVerest code start ***
+                if (chargeParameterDiscoveryReq.getEVChargeParameter().getValue() instanceof ACEVChargeParameterType) {
+                    ObjectHolder.mqtt.publish_var("ac_charger", "departure_time", chargeParameterDiscoveryReq.getEVChargeParameter().getValue().getDepartureTime());
+                    ObjectHolder.mqtt.publish_var("ac_charger", "requested_energy_tranfer_mode", chargeParameterDiscoveryReq.getRequestedEnergyTransferMode().value());
+                    ACEVChargeParameterType acEVChargeParameter = (ACEVChargeParameterType) chargeParameterDiscoveryReq.getEVChargeParameter().getValue();
+                    ObjectHolder.mqtt.publish_var("ac_charger", "e_amount", acEVChargeParameter.getEAmount().getValue());
+                    ObjectHolder.mqtt.publish_var("ac_charger", "ev_max_voltage", acEVChargeParameter.getEVMaxVoltage().getValue());
+                    ObjectHolder.mqtt.publish_var("ac_charger", "ev_max_current", acEVChargeParameter.getEVMaxCurrent().getValue());
+                    ObjectHolder.mqtt.publish_var("ac_charger", "ev_min_current", acEVChargeParameter.getEVMinCurrent().getValue());
+                } else if (chargeParameterDiscoveryReq.getEVChargeParameter().getValue() instanceof DCEVChargeParameterType) {
+                    ObjectHolder.mqtt.publish_var("dc_charger", "departure_time", chargeParameterDiscoveryReq.getEVChargeParameter().getValue().getDepartureTime());
+                    ObjectHolder.mqtt.publish_var("dc_charger", "requested_energy_tranfer_mode", chargeParameterDiscoveryReq.getRequestedEnergyTransferMode().value());
+                    DCEVChargeParameterType dcEVChargeParameter = (DCEVChargeParameterType) chargeParameterDiscoveryReq.getEVChargeParameter().getValue();
+                    ObjectHolder.mqtt.publish_var("dc_charger", "dc_evse_status", dcEVChargeParameter.getDCEVStatus());
+                    ObjectHolder.mqtt.publish_var("dc_charger", "ev_maximum_current_limit", dcEVChargeParameter.getEVMaximumCurrentLimit().getValue());
+                    ObjectHolder.mqtt.publish_var("dc_charger", "ev_maximum_voltage_limit", dcEVChargeParameter.getEVMaximumVoltageLimit().getValue());
+                    if(dcEVChargeParameter.getEVMaximumPowerLimit() != null)
+                        ObjectHolder.mqtt.publish_var("dc_charger", "ev_maximum_power_limit", dcEVChargeParameter.getEVMaximumPowerLimit().getValue());
+                    if(dcEVChargeParameter.getEVEnergyCapacity() != null)
+                        ObjectHolder.mqtt.publish_var("dc_charger", "ev_energy_capacity", dcEVChargeParameter.getEVEnergyCapacity().getValue());
+                    if(dcEVChargeParameter.getEVEnergyRequest() != null)
+                        ObjectHolder.mqtt.publish_var("dc_charger", "ev_energy_request", dcEVChargeParameter.getEVEnergyRequest().getValue());
+                    if(dcEVChargeParameter.getFullSOC() != null)
+                        ObjectHolder.mqtt.publish_var("dc_charger", "remaining_time_to_full_soc", dcEVChargeParameter.getFullSOC());
+                    if(dcEVChargeParameter.getBulkSOC() != null)
+                        ObjectHolder.mqtt.publish_var("dc_charger", "remaining_time_to_bulk_soc", dcEVChargeParameter.getBulkSOC());
+                }
+                // *** EVerest code end ***
+                
+                
 				getCommSessionContext().setRequestedEnergyTransferMode(
 						chargeParameterDiscoveryReq.getRequestedEnergyTransferMode());
 				

@@ -35,6 +35,10 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SelectedServiceType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ServiceType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+// *** EVerest code end ***
+
 public class WaitForPaymentServiceSelectionReq extends ServerState {
 	
 	private PaymentServiceSelectionResType paymentServiceSelectionRes;
@@ -54,7 +58,17 @@ public class WaitForPaymentServiceSelectionReq extends ServerState {
 			getLogger().info("Payment option " + paymentServiceSelectionReq.getSelectedPaymentOption().toString() + 
 							 " has been chosen by EVCC");
 			getCommSessionContext().setSelectedPaymentOption(paymentServiceSelectionReq.getSelectedPaymentOption());
-			
+            
+            
+            // *** EVerest code start ***
+            // AC is default if unset, like in method getEvseController of V2GCommunicationSessionSECC
+            if (getCommSessionContext().getRequestedEnergyTransferMode() == null || getCommSessionContext().getRequestedEnergyTransferMode().toString().startsWith("AC")) 
+                ObjectHolder.mqtt.publish_var("ac_charger", "selected_payment_option", paymentServiceSelectionReq.getSelectedPaymentOption().value());
+            else 
+                ObjectHolder.mqtt.publish_var("dc_charger", "selected_payment_option", paymentServiceSelectionReq.getSelectedPaymentOption().value());
+            // *** EVerest code start ***
+            
+            
 			if (isResponseCodeOK(paymentServiceSelectionReq)) {
 				// see [V2G2-551]
 				if (paymentServiceSelectionReq.getSelectedPaymentOption().equals(PaymentOptionType.CONTRACT)) {

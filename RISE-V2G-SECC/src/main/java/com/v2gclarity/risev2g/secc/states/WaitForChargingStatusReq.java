@@ -34,6 +34,10 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.MeterInfoType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.PaymentOptionType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.secc.evseController.*;
+// *** EVerest code end ***
+
 public class WaitForChargingStatusReq extends ServerState {
 
 	private ChargingStatusResType chargingStatusRes;
@@ -65,7 +69,10 @@ public class WaitForChargingStatusReq extends ServerState {
 				chargingStatusRes.setReceiptRequired(false);
 			} else {
 				// Only in PnC mode according to [V2G2-691]
-				chargingStatusRes.setReceiptRequired(false);
+                // *** EVerest code start ***
+                //chargingStatusRes.setReceiptRequired(false);
+                chargingStatusRes.setReceiptRequired(((EverestACEVSEController)getCommSessionContext().getACEvseController()).getReceiptRequired());
+                // *** EVerest code end ***
 			}
 			
 			// Optionally set EVSEMaxCurrent (if NOT in AC PnC mode) -> check with AC station

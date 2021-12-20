@@ -32,6 +32,9 @@ import com.v2gclarity.risev2g.secc.transportLayer.UDPServer;
 import com.v2gclarity.risev2g.shared.enumerations.GlobalValues;
 import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+import com.v2gclarity.risev2g.shared.misc.Mqtt;
+
 public class StartSECC {
 	
 	public static void main(String[] args) {
@@ -66,6 +69,15 @@ public class StartSECC {
 			udpServerThread.start();
 			tcpServerThread.start();
 			tlsServerThread.start();
-		} 
+		}
+		
+		// *** EVerest code start ***
+        logger.info("STARTED WITH ARGS:");
+        for(String arg : args) {
+            logger.info(arg);
+        }
+        ObjectHolder.mqtt = new Mqtt(args[0], args[1], args[2]);
+        ObjectHolder.mqtt.publish_ready(true);
+        // *** EVerest code end ***
 	}
 }

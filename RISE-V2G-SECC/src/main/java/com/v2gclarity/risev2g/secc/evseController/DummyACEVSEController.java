@@ -63,7 +63,7 @@ public class DummyACEVSEController implements IACEVSEController {
 		PhysicalValueType evseMaxCurrent = new PhysicalValueType();
 		evseMaxCurrent.setMultiplier(ByteUtils.toByteFromHexString("00"));
 		evseMaxCurrent.setUnit(UnitSymbolType.A);
-		evseMaxCurrent.setValue((short) 32);
+		evseMaxCurrent.setValue((short) 16);
 		acEVSEChargeParameter.setEVSEMaxCurrent(evseMaxCurrent);
 		
 		acEVSEChargeParameter.setACEVSEStatus(getACEVSEStatus(EVSENotificationType.NONE));

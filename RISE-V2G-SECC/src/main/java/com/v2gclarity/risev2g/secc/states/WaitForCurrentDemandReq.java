@@ -35,6 +35,10 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.PaymentOptionType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.secc.evseController.*;
+// *** EVerest code end ***
+
 public class WaitForCurrentDemandReq extends ServerState {
 
 	private CurrentDemandResType currentDemandRes;
@@ -87,7 +91,10 @@ public class WaitForCurrentDemandReq extends ServerState {
 				currentDemandRes.setReceiptRequired(false);
 			} else {
 				// Optionally set to true, but only in PnC mode according to [V2G2-691]
-				currentDemandRes.setReceiptRequired(false);
+                // *** EVerest code start ***
+                //currentDemandRes.setReceiptRequired(false);
+                currentDemandRes.setReceiptRequired(((EverestDCEVSEController)getCommSessionContext().getDCEvseController()).getReceiptRequired());
+                // *** EVerest code end ***
 			}
 			
 			if (currentDemandRes.isReceiptRequired()) {
