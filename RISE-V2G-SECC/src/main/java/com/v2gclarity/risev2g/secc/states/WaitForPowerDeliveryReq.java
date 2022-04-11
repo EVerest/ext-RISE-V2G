@@ -34,6 +34,7 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ACEVSEStatusType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.BodyBaseType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ChargeProgressType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ChargingProfileType;
+import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.DCEVPowerDeliveryParameterType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.DCEVSEStatusCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.DCEVSEStatusType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.EVSENotificationType;
@@ -46,9 +47,19 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SAScheduleTupleType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
+// *** EVerest code end ***
+
 public class WaitForPowerDeliveryReq extends ServerState {
 
 	private PowerDeliveryResType powerDeliveryRes;
+
+	// *** EVerest code start ***
+	private boolean v2GSetupFinishedReached = false;
+	private boolean acContactorAlreadyClosed = false;
+	// *** EVerest code end ***
 	
 	public WaitForPowerDeliveryReq(
 			V2GCommunicationSessionSECC commSessionContext) {
@@ -62,6 +73,21 @@ public class WaitForPowerDeliveryReq extends ServerState {
 			V2GMessage v2gMessageReq = (V2GMessage) message;
 			PowerDeliveryReqType powerDeliveryReq = (PowerDeliveryReqType) v2gMessageReq.getBody().getBodyElement().getValue();
 
+			// *** EVerest code start ***
+			if (powerDeliveryReq.getEVPowerDeliveryParameter() != null) {
+				DCEVPowerDeliveryParameterType dcEVPowerDeliveryParameter = (DCEVPowerDeliveryParameterType) powerDeliveryReq.getEVPowerDeliveryParameter().getValue();
+
+				if (dcEVPowerDeliveryParameter.isBulkChargingComplete() != null) {
+					ObjectHolder.mqtt.publish_var("charger", "DC_BulkChargingComplete", dcEVPowerDeliveryParameter.isBulkChargingComplete());
+				}
+				
+				ObjectHolder.mqtt.publish_var("charger", "DC_ChargingComplete", dcEVPowerDeliveryParameter.isChargingComplete());
+				ObjectHolder.mqtt.publish_var("charger", "DC_EVReady", dcEVPowerDeliveryParameter.getDCEVStatus().isEVReady());
+				ObjectHolder.mqtt.publish_var("charger", "DC_EVErrorCode", dcEVPowerDeliveryParameter.getDCEVStatus().getEVErrorCode().value());
+				ObjectHolder.mqtt.publish_var("charger", "DC_EVRESSSOC", dcEVPowerDeliveryParameter.getDCEVStatus().getEVRESSSOC());
+			}
+			// *** EVerest code end ***
+
 			if (isResponseCodeOK(powerDeliveryReq)) {
 				getCommSessionContext().setChosenSAScheduleTuple(powerDeliveryReq.getSAScheduleTupleID());
 				
@@ -70,15 +96,50 @@ public class WaitForPowerDeliveryReq extends ServerState {
 				setEVSEStatus(powerDeliveryRes);
 				
 				if (powerDeliveryReq.getChargeProgress().equals(ChargeProgressType.START)) {
+
+					// *** EVerest code start ***
+					if (v2GSetupFinishedReached == false) {
+						ObjectHolder.mqtt.publish_var("charger", "V2G_Setup_Finished", null);
+						v2GSetupFinishedReached = true;
+					}
+					// *** EVerest code end ***
+
 					getCommSessionContext().setChargeProgressStarted(true); // see [V2G2-812]
 					
-					if (getCommSessionContext().getRequestedEnergyTransferMode().toString().startsWith("AC"))
-						return getSendMessage(powerDeliveryRes, V2GMessages.CHARGING_STATUS_REQ);
+					if (getCommSessionContext().getRequestedEnergyTransferMode().toString().startsWith("AC")) {
+						// *** EVerest code start ***
+						if (acContactorAlreadyClosed == false) {
+							ObjectHolder.mqtt.publish_var("charger", "AC_Close_Contactor", true);
+							acContactorAlreadyClosed = true;
+						}
+						if (getCommSessionContext().getEvseController().closeContactor() == true) {
+							return getSendMessage(powerDeliveryRes, V2GMessages.CHARGING_STATUS_REQ);
+						} else {
+							powerDeliveryRes.setResponseCode(ResponseCodeType.FAILED_CONTACTOR_ERROR);
+							setMandatoryFieldsForFailedRes(powerDeliveryRes, powerDeliveryRes.getResponseCode());
+						}
+						// *** EVerest code end ***
+					}	
 					else
 						return getSendMessage(powerDeliveryRes, V2GMessages.CURRENT_DEMAND_REQ);
 				} else if (powerDeliveryReq.getChargeProgress().equals(ChargeProgressType.STOP)) {
+
+					// *** EVerest code start ***
+					v2GSetupFinishedReached = false;	// Reset if the charging session is stopped
+					acContactorAlreadyClosed = false;	// Reset if the charging session is stopped
+					// *** EVerest code end ***
+
 					if (getCommSessionContext().getRequestedEnergyTransferMode().toString().startsWith("AC")) {
-						return getSendMessage(powerDeliveryRes, V2GMessages.SESSION_STOP_REQ);
+						// *** EVerest code start ***
+						ObjectHolder.mqtt.publish_var("charger", "AC_Open_Contactor", true);
+						// *** EVerest code end ***
+						if (getCommSessionContext().getEvseController().openContactor() == true) {
+							return getSendMessage(powerDeliveryRes, V2GMessages.SESSION_STOP_REQ);
+						} else {
+							powerDeliveryRes.setResponseCode(ResponseCodeType.FAILED_CONTACTOR_ERROR);
+							setMandatoryFieldsForFailedRes(powerDeliveryRes, powerDeliveryRes.getResponseCode());
+						}
+
 					} else {
 						((ForkState) getCommSessionContext().getStates().get(V2GMessages.FORK))
 						.getAllowedRequests().add(V2GMessages.WELDING_DETECTION_REQ);
@@ -161,19 +222,17 @@ public class WaitForPowerDeliveryReq extends ServerState {
 					
 		}
 		
-		if ((powerDeliveryReq.getChargeProgress().equals(ChargeProgressType.START) &&
-			 !getCommSessionContext().getEvseController().closeContactor()) ||
-			(powerDeliveryReq.getChargeProgress().equals(ChargeProgressType.STOP) &&
-			 !getCommSessionContext().getEvseController().openContactor())) {
-			powerDeliveryRes.setResponseCode(ResponseCodeType.FAILED_CONTACTOR_ERROR);
-			return false;
-		}
-		
 		return true;
 	}
 	
 	
 	protected void setEVSEStatus(PowerDeliveryResType powerDeliveryRes) {
+		
+		EVSENotificationType notification = EVSENotificationType.NONE;
+		if (((EverestEVSEController) getCommSessionContext().getACEvseController()).getStopCharging()) {
+			notification = EVSENotificationType.STOP_CHARGING;
+		}
+		
 		// In case the SECC received a PowerDeliveryReq before a PaymentServiceSelectionReq, the field requestedEnergyTransferMode will be null. So we need to check for it.
 		if (getCommSessionContext().getRequestedEnergyTransferMode() != null && getCommSessionContext().getRequestedEnergyTransferMode().toString().startsWith("AC")) {
 			/*
@@ -182,7 +241,7 @@ public class WaitForPowerDeliveryReq extends ServerState {
 			 */
 			JAXBElement<ACEVSEStatusType> jaxbEVSEStatus = new JAXBElement<>(new QName("urn:iso:15118:2:2013:MsgDataTypes", "AC_EVSEStatus"), 
 					ACEVSEStatusType.class, 
-					getCommSessionContext().getACEvseController().getACEVSEStatus(EVSENotificationType.NONE));
+					getCommSessionContext().getACEvseController().getACEVSEStatus(notification));
 			powerDeliveryRes.setEVSEStatus(jaxbEVSEStatus);
 		} else if (getCommSessionContext().getRequestedEnergyTransferMode() != null && getCommSessionContext().getRequestedEnergyTransferMode().toString().startsWith("DC")) {
 			/*
@@ -191,7 +250,7 @@ public class WaitForPowerDeliveryReq extends ServerState {
 			 */
 			JAXBElement<DCEVSEStatusType> jaxbACEVSEStatus = new JAXBElement<>(new QName("urn:iso:15118:2:2013:MsgDataTypes", "DC_EVSEStatus"), 
 					DCEVSEStatusType.class, 
-					getCommSessionContext().getDCEvseController().getDCEVSEStatus(EVSENotificationType.NONE));
+					getCommSessionContext().getDCEvseController().getDCEVSEStatus(notification));
 			powerDeliveryRes.setEVSEStatus(jaxbACEVSEStatus);
 		} else {
 			getLogger().warn("RequestedEnergyTransferMode '" + getCommSessionContext().getRequestedEnergyTransferMode().toString() + 

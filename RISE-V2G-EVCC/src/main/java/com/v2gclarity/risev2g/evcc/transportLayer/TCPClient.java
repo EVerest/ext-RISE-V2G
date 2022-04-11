@@ -30,6 +30,7 @@ import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
 import com.v2gclarity.risev2g.shared.misc.V2GTPMessage;
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
 
 public class TCPClient extends StatefulTransportLayerClient {
 	
@@ -132,6 +133,9 @@ public class TCPClient extends StatefulTransportLayerClient {
 	@Override
 	public void stop() {
 		if (!isStopAlreadyInitiated()) {
+
+			ObjectHolder.ev_mqtt.mqtt_disconnect();
+
 			getLogger().debug("Stopping TCP client ...");
 			setStopAlreadyInitiated(true);
 			

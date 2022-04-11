@@ -24,6 +24,7 @@
 package com.v2gclarity.risev2g.evcc.misc;
 
 import com.v2gclarity.risev2g.evcc.evController.DummyEVController;
+import com.v2gclarity.risev2g.evcc.evController.EverestEVController;
 import com.v2gclarity.risev2g.evcc.evController.IEVController;
 import com.v2gclarity.risev2g.evcc.session.V2GCommunicationSessionEVCC;
 import com.v2gclarity.risev2g.shared.misc.V2GImplementationFactory;

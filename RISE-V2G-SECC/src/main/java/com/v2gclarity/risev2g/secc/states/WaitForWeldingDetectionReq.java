@@ -34,6 +34,11 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.WeldingDetectionReqType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.WeldingDetectionResType;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
+// *** EVerest code end ***
+
 public class WaitForWeldingDetectionReq extends ServerState {
 
 	private WeldingDetectionResType weldingDetectionRes;
@@ -49,12 +54,23 @@ public class WaitForWeldingDetectionReq extends ServerState {
 			V2GMessage v2gMessageReq = (V2GMessage) message;
 			WeldingDetectionReqType weldingDetectionReq = 
 					(WeldingDetectionReqType) v2gMessageReq.getBody().getBodyElement().getValue();
+
+			EVSENotificationType notification = EVSENotificationType.NONE;
+			if (((EverestEVSEController)getCommSessionContext().getDCEvseController()).getStopCharging()) {
+				notification = EVSENotificationType.STOP_CHARGING;
+			}
+
+			// *** EVerest code start ***
+			ObjectHolder.mqtt.publish_var("charger", "DC_EVReady", weldingDetectionReq.getDCEVStatus().isEVReady());
+			ObjectHolder.mqtt.publish_var("charger", "DC_EVErrorCode", weldingDetectionReq.getDCEVStatus().getEVErrorCode().value());
+			ObjectHolder.mqtt.publish_var("charger", "DC_EVRESSSOC", weldingDetectionReq.getDCEVStatus().getEVRESSSOC());
+			// *** EVerest code end ***
 			
 			// TODO how to react to failure status of DCEVStatus of weldingDetectionReq?
 			
 			IDCEVSEController evseController = (IDCEVSEController) getCommSessionContext().getDCEvseController();
 			
-			weldingDetectionRes.setDCEVSEStatus(evseController.getDCEVSEStatus(EVSENotificationType.NONE));
+			weldingDetectionRes.setDCEVSEStatus(evseController.getDCEVSEStatus(notification));
 			weldingDetectionRes.setEVSEPresentVoltage(evseController.getPresentVoltage());
 			
 			((ForkState) getCommSessionContext().getStates().get(V2GMessages.FORK))

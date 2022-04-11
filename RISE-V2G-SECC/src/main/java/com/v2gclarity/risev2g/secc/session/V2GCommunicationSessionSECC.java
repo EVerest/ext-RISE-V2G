@@ -26,10 +26,13 @@ package com.v2gclarity.risev2g.secc.session;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.TimeUnit;
 
 import com.v2gclarity.risev2g.secc.backend.IBackendInterface;
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
 import com.v2gclarity.risev2g.secc.evseController.IACEVSEController;
 import com.v2gclarity.risev2g.secc.evseController.IDCEVSEController;
 import com.v2gclarity.risev2g.secc.evseController.IEVSEController;
@@ -80,6 +83,18 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SAScheduleListType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ServiceType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
+
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+import org.json.simple.JSONObject;
+import javax.xml.bind.JAXBElement;
+import java.io.StringWriter;
+import com.v2gclarity.risev2g.shared.v2gMessages.appProtocol.SupportedAppProtocolRes;
+import javax.xml.bind.JAXBException;
+import com.v2gclarity.risev2g.shared.exiCodec.ExiCodec;
+import com.v2gclarity.risev2g.shared.exiCodec.EXIficientCodec;
+import com.v2gclarity.risev2g.shared.utils.SleepUtils;
+// *** EVerest code end ***
 
 public class V2GCommunicationSessionSECC extends V2GCommunicationSession implements Observer {
 	
@@ -132,10 +147,6 @@ public class V2GCommunicationSessionSECC extends V2GCommunicationSession impleme
 		setStartState(getStates().get(V2GMessages.SUPPORTED_APP_PROTOCOL_REQ));
 		setCurrentState(getStartState());
 		
-		// Configure which EVSE controller implementation to use
-		setACEvseController(SECCImplementationFactory.createACEVSEController(this));
-		setDCEvseController(SECCImplementationFactory.createDCEVSEController(this));
-		
 		// Configures which backend interface implementation to use for retrieving SASchedules
 		setBackendInterface(SECCImplementationFactory.createBackendInterface(this));
 
@@ -180,6 +191,19 @@ public class V2GCommunicationSessionSECC extends V2GCommunicationSession impleme
 			} else {
 				incomingMessage = (V2GMessage) getMessageHandler().exiToV2gMsg(getV2gTpMessage().getPayload());
 			}
+
+			// *** EVerest code start ***
+			if (((EverestEVSEController) getEvseController()).getDebugMode().equals("Full")) {
+				DebugAllV2GMessages(incomingMessage, getV2gTpMessage().getPayload());
+			}
+
+			if (getCurrentState().equals(getStates().get(V2GMessages.CURRENT_DEMAND_REQ)) || getCurrentState().equals(getStates().get(V2GMessages.CURRENT_DEMAND_RES))) {
+				SleepUtils.safeSleep(TimeUnit.MILLISECONDS, 200);
+			} else {
+				SleepUtils.safeSleep(TimeUnit.MILLISECONDS, 500);
+			}
+			
+			// *** EVerest code end ***
 			
 			processReaction(getCurrentState().processIncomingMessage(incomingMessage));
 		} else {
@@ -261,7 +285,7 @@ public class V2GCommunicationSessionSECC extends V2GCommunicationSession impleme
 		if (isOldSessionJoined()) {
 			paymentOptions.add(selectedPaymentOption);
 		} else { 
-			paymentOptions.addAll((ArrayList<PaymentOptionType>) (MiscUtils.getPropertyValue("authentication.modes.supported")));
+			paymentOptions.addAll( ((EverestEVSEController)getEvseController()).getPaymentOptions());
 		}
 		
 		// Contract-based payment may only be offered if TLS is used
@@ -278,12 +302,18 @@ public class V2GCommunicationSessionSECC extends V2GCommunicationSession impleme
 	public void send(SendMessage sendMessage) {
 		// Only EXI encoded messages will be sent here. Decide whether V2GMessage or SupportedAppProtocolRes
 		byte[] payload = null;
-		
+
 		if (sendMessage.getPayload() instanceof V2GMessage) {
 			payload = (byte[]) getMessageHandler().v2gMsgToExi(sendMessage.getPayload());
 		} else {
 			payload = (byte[]) getMessageHandler().suppAppProtocolMsgToExi(sendMessage.getPayload());
 		}
+
+		// *** EVerest code start ***
+		if (((EverestEVSEController) getEvseController()).getDebugMode().equals("Full")) {
+			DebugAllV2GMessages(sendMessage.getPayload(), payload);
+		}
+		// *** EVerest code end ***
 			
 		setV2gTpMessage(
 				new V2GTPMessage(GlobalValues.V2GTP_VERSION_1_IS.getByteValue(), 
@@ -491,4 +521,42 @@ public class V2GCommunicationSessionSECC extends V2GCommunicationSession impleme
 	public void setChargingSession(ChargingSessionType chargingSession) {
 		this.chargingSession = chargingSession;
 	}
+
+	// *** EVerest code start ***
+	public void DebugAllV2GMessages(Object message, byte[] exiByte) {
+		StringWriter sw = new StringWriter();
+		String className = "";
+
+		JSONObject v2g_messages = new JSONObject();
+		
+		if (message instanceof V2GMessage) {
+			className = ((V2GMessage) message).getBody().getBodyElement().getName().getLocalPart();
+		} else if (message instanceof JAXBElement) {
+			className = ((JAXBElement) message).getName().getLocalPart();
+		} else if (message instanceof SupportedAppProtocolReq) {
+			className = "SupportedAppProtocolReq"; 
+		} else if (message instanceof SupportedAppProtocolRes) {
+			className = "SupportedAppProtocolRes";
+		} else {
+			className = "marshalled JAXBElement";
+		}
+		
+		try {
+			ExiCodec exiCodec = EXIficientCodec.getInstance();
+			exiCodec.getMarshaller().marshal(message, sw);
+			String msg = new String(sw.toString());
+
+			v2g_messages.put("V2G_Message_ID", className);
+			v2g_messages.put("V2G_Message_XML", msg);
+			v2g_messages.put("V2G_Message_EXI_Hex", ByteUtils.toHexString(exiByte));
+			v2g_messages.put("V2G_Message_EXI_Base64", Base64.getEncoder().encodeToString(exiByte));
+
+			ObjectHolder.mqtt.publish_var("charger", "V2G_Messages", v2g_messages);
+
+		} catch (JAXBException e) {
+			getLogger().error(e.getClass().getSimpleName() + " occurred while trying to debug XML representation of " + className, e);
+		}
+	}
+	// *** EVerest code start ***
+	
 }

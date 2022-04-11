@@ -47,6 +47,9 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 
 // *** EVerest code start ***
 import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+import java.time.format.DateTimeFormatter;
+import java.time.LocalDateTime;
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
 // *** EVerest code end ***
 
 public class WaitForChargeParameterDiscoveryReq extends ServerState {
@@ -67,34 +70,70 @@ public class WaitForChargeParameterDiscoveryReq extends ServerState {
 					(ChargeParameterDiscoveryReqType) v2gMessageReq.getBody().getBodyElement().getValue();
 			
 			if (isResponseCodeOK(chargeParameterDiscoveryReq)) {
-                
-                
+
                 // *** EVerest code start ***
+				LocalDateTime now = LocalDateTime.now();
+				DateTimeFormatter myFormatObj = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
                 if (chargeParameterDiscoveryReq.getEVChargeParameter().getValue() instanceof ACEVChargeParameterType) {
-                    ObjectHolder.mqtt.publish_var("ac_charger", "departure_time", chargeParameterDiscoveryReq.getEVChargeParameter().getValue().getDepartureTime());
-                    ObjectHolder.mqtt.publish_var("ac_charger", "requested_energy_tranfer_mode", chargeParameterDiscoveryReq.getRequestedEnergyTransferMode().value());
-                    ACEVChargeParameterType acEVChargeParameter = (ACEVChargeParameterType) chargeParameterDiscoveryReq.getEVChargeParameter().getValue();
-                    ObjectHolder.mqtt.publish_var("ac_charger", "e_amount", acEVChargeParameter.getEAmount().getValue());
-                    ObjectHolder.mqtt.publish_var("ac_charger", "ev_max_voltage", acEVChargeParameter.getEVMaxVoltage().getValue());
-                    ObjectHolder.mqtt.publish_var("ac_charger", "ev_max_current", acEVChargeParameter.getEVMaxCurrent().getValue());
-                    ObjectHolder.mqtt.publish_var("ac_charger", "ev_min_current", acEVChargeParameter.getEVMinCurrent().getValue());
+
+					ObjectHolder.mqtt.publish_var("charger", "RequestedEnergyTransferMode", chargeParameterDiscoveryReq.getRequestedEnergyTransferMode().value());
+                    
+					ACEVChargeParameterType acEVChargeParameter = (ACEVChargeParameterType) chargeParameterDiscoveryReq.getEVChargeParameter().getValue();
+					
+					if (acEVChargeParameter.getDepartureTime() != null) {
+						LocalDateTime depatureTime = now.plusSeconds(acEVChargeParameter.getDepartureTime());
+						String formattedDate = depatureTime.format(myFormatObj);
+						ObjectHolder.mqtt.publish_var("charger", "DepartureTime", formattedDate);
+					}
+					
+					double AC_EAmount = acEVChargeParameter.getEAmount().getValue() * Math.pow(10, acEVChargeParameter.getEAmount().getMultiplier());
+					ObjectHolder.mqtt.publish_var("charger", "AC_EAmount", AC_EAmount);
+					double AC_EVMaxVoltage = acEVChargeParameter.getEVMaxVoltage().getValue() * Math.pow(10, acEVChargeParameter.getEVMaxVoltage().getMultiplier());
+                    ObjectHolder.mqtt.publish_var("charger", "AC_EVMaxVoltage", AC_EVMaxVoltage);
+					double AC_EVMaxCurrent = acEVChargeParameter.getEVMaxCurrent().getValue() * Math.pow(10, acEVChargeParameter.getEVMaxCurrent().getMultiplier());
+                    ObjectHolder.mqtt.publish_var("charger", "AC_EVMaxCurrent", AC_EVMaxCurrent);
+					double AC_EVMinCurrent = acEVChargeParameter.getEVMinCurrent().getValue() * Math.pow(10, acEVChargeParameter.getEVMinCurrent().getMultiplier());
+                    ObjectHolder.mqtt.publish_var("charger", "AC_EVMinCurrent", AC_EVMinCurrent);
+
                 } else if (chargeParameterDiscoveryReq.getEVChargeParameter().getValue() instanceof DCEVChargeParameterType) {
-                    ObjectHolder.mqtt.publish_var("dc_charger", "departure_time", chargeParameterDiscoveryReq.getEVChargeParameter().getValue().getDepartureTime());
-                    ObjectHolder.mqtt.publish_var("dc_charger", "requested_energy_tranfer_mode", chargeParameterDiscoveryReq.getRequestedEnergyTransferMode().value());
-                    DCEVChargeParameterType dcEVChargeParameter = (DCEVChargeParameterType) chargeParameterDiscoveryReq.getEVChargeParameter().getValue();
-                    ObjectHolder.mqtt.publish_var("dc_charger", "dc_evse_status", dcEVChargeParameter.getDCEVStatus());
-                    ObjectHolder.mqtt.publish_var("dc_charger", "ev_maximum_current_limit", dcEVChargeParameter.getEVMaximumCurrentLimit().getValue());
-                    ObjectHolder.mqtt.publish_var("dc_charger", "ev_maximum_voltage_limit", dcEVChargeParameter.getEVMaximumVoltageLimit().getValue());
-                    if(dcEVChargeParameter.getEVMaximumPowerLimit() != null)
-                        ObjectHolder.mqtt.publish_var("dc_charger", "ev_maximum_power_limit", dcEVChargeParameter.getEVMaximumPowerLimit().getValue());
-                    if(dcEVChargeParameter.getEVEnergyCapacity() != null)
-                        ObjectHolder.mqtt.publish_var("dc_charger", "ev_energy_capacity", dcEVChargeParameter.getEVEnergyCapacity().getValue());
-                    if(dcEVChargeParameter.getEVEnergyRequest() != null)
-                        ObjectHolder.mqtt.publish_var("dc_charger", "ev_energy_request", dcEVChargeParameter.getEVEnergyRequest().getValue());
-                    if(dcEVChargeParameter.getFullSOC() != null)
-                        ObjectHolder.mqtt.publish_var("dc_charger", "remaining_time_to_full_soc", dcEVChargeParameter.getFullSOC());
-                    if(dcEVChargeParameter.getBulkSOC() != null)
-                        ObjectHolder.mqtt.publish_var("dc_charger", "remaining_time_to_bulk_soc", dcEVChargeParameter.getBulkSOC());
+                    
+					DCEVChargeParameterType dcEVChargeParameter = (DCEVChargeParameterType) chargeParameterDiscoveryReq.getEVChargeParameter().getValue();
+
+					if (dcEVChargeParameter.getDepartureTime() != null) {
+						LocalDateTime depatureTime = now.plusSeconds(dcEVChargeParameter.getDepartureTime());
+						String formattedDate = depatureTime.format(myFormatObj);
+						ObjectHolder.mqtt.publish_var("charger", "DepartureTime", formattedDate);
+					}
+
+					ObjectHolder.mqtt.publish_var("charger", "DC_EVReady", dcEVChargeParameter.getDCEVStatus().isEVReady());
+					ObjectHolder.mqtt.publish_var("charger", "DC_EVErrorCode", dcEVChargeParameter.getDCEVStatus().getEVErrorCode().value());
+					ObjectHolder.mqtt.publish_var("charger", "DC_EVRESSSOC", dcEVChargeParameter.getDCEVStatus().getEVRESSSOC());
+
+					double DC_EVMaximumCurrentLimit = dcEVChargeParameter.getEVMaximumCurrentLimit().getValue() * Math.pow(10, dcEVChargeParameter.getEVMaximumCurrentLimit().getMultiplier());
+                    ObjectHolder.mqtt.publish_var("charger", "DC_EVMaximumCurrentLimit", DC_EVMaximumCurrentLimit);
+					double DC_EVMaximumVoltageLimit = dcEVChargeParameter.getEVMaximumVoltageLimit().getValue() * Math.pow(10, dcEVChargeParameter.getEVMaximumVoltageLimit().getMultiplier());
+                    ObjectHolder.mqtt.publish_var("charger", "DC_EVMaximumVoltageLimit", DC_EVMaximumVoltageLimit);
+
+					if (dcEVChargeParameter.getEVMaximumPowerLimit() != null) {
+						double DC_EVMaximumPowerLimit = dcEVChargeParameter.getEVMaximumPowerLimit().getValue() * Math.pow(10, dcEVChargeParameter.getEVMaximumPowerLimit().getMultiplier());
+                    	ObjectHolder.mqtt.publish_var("charger", "DC_EVMaximumPowerLimit", DC_EVMaximumPowerLimit);
+					}
+                    if(dcEVChargeParameter.getEVEnergyCapacity() != null) {
+						double DC_EVEnergyCapacity = dcEVChargeParameter.getEVEnergyCapacity().getValue() * Math.pow(10, dcEVChargeParameter.getEVEnergyCapacity().getMultiplier());
+						ObjectHolder.mqtt.publish_var("charger", "DC_EVEnergyCapacity", DC_EVEnergyCapacity);
+					}  
+                    if(dcEVChargeParameter.getEVEnergyRequest() != null) {
+						double DC_EVEnergyRequest = dcEVChargeParameter.getEVEnergyRequest().getValue() * Math.pow(10, dcEVChargeParameter.getEVEnergyRequest().getMultiplier());
+                        ObjectHolder.mqtt.publish_var("charger", "DC_EVEnergyRequest", DC_EVEnergyRequest);
+					}
+                    if(dcEVChargeParameter.getFullSOC() != null) {
+						ObjectHolder.mqtt.publish_var("charger", "DC_FullSOC", dcEVChargeParameter.getFullSOC());
+					}
+                    if(dcEVChargeParameter.getBulkSOC() != null) {
+						ObjectHolder.mqtt.publish_var("charger", "DC_BulkSOC", dcEVChargeParameter.getBulkSOC());
+					}
+                        
                 }
                 // *** EVerest code end ***
                 
@@ -198,7 +237,9 @@ public class WaitForChargeParameterDiscoveryReq extends ServerState {
 	
 	public boolean isResponseCodeOK(ChargeParameterDiscoveryReqType chargeParameterDiscoveryReq) {
 		// Check if the EV's requested EnergyTransferModeType is supported
-		ArrayList<EnergyTransferModeType> evseSupported = getCommSessionContext().getSupportedEnergyTransferModes();
+	//	ArrayList<EnergyTransferModeType> evseSupported = getCommSessionContext().getSupportedEnergyTransferModes();
+		ArrayList<EnergyTransferModeType> evseSupported = ((EverestEVSEController)getCommSessionContext().getEvseController()).getEnergyTransferModes();
+	
 		EnergyTransferModeType evRequested = chargeParameterDiscoveryReq.getRequestedEnergyTransferMode();
 		
 		if (!evseSupported.contains(evRequested)) {
@@ -269,7 +310,8 @@ public class WaitForChargeParameterDiscoveryReq extends ServerState {
 				( dcEVChargeParameter.getDCEVStatus().getEVRESSSOC() < 0 ||
 				  dcEVChargeParameter.getDCEVStatus().getEVRESSSOC() > 100 ||
 				  dcEVChargeParameter.getEVMaximumCurrentLimit().getValue() < 0 ||
-				  dcEVChargeParameter.getEVMaximumCurrentLimit().getValue() * Math.pow(10, dcEVChargeParameter.getEVMaximumCurrentLimit().getMultiplier()) > 400 ||
+				  // This is workaround for the Mercedes EQS. The EV sends over 400A. 
+				  dcEVChargeParameter.getEVMaximumCurrentLimit().getValue() * Math.pow(10, dcEVChargeParameter.getEVMaximumCurrentLimit().getMultiplier()) > 1000 ||
 				  dcEVChargeParameter.getEVMaximumVoltageLimit().getValue() < 0 ||
 				  dcEVChargeParameter.getEVMaximumVoltageLimit().getValue() * Math.pow(10, dcEVChargeParameter.getEVMaximumVoltageLimit().getMultiplier()) > 1000 ||
 				  ( // EVMaximumPowerLimit is optional

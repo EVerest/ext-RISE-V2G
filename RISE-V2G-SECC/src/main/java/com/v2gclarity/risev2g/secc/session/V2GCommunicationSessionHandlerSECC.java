@@ -45,6 +45,11 @@ import com.v2gclarity.risev2g.shared.utils.ByteUtils;
 import com.v2gclarity.risev2g.shared.v2gMessages.SECCDiscoveryReq;
 import com.v2gclarity.risev2g.shared.v2gMessages.SECCDiscoveryRes;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+// *** EVerest code end ***
+
 public class V2GCommunicationSessionHandlerSECC implements Observer {
 
 	private Logger logger = LogManager.getLogger(this.getClass().getSimpleName());
@@ -58,8 +63,12 @@ public class V2GCommunicationSessionHandlerSECC implements Observer {
 	private static HashMap<ConnectionHandler, Thread> connectionHandlerMap;
 	private MessageHandler messageHandler;
 	private V2GTPMessage v2gTpMessage;
-	private byte security; 
+	private byte security;
 	
+	// *** EVerest code start ***
+	private EverestEVSEController EverestEVSEController;
+	// *** EVerest code end ***
+
 	public V2GCommunicationSessionHandlerSECC() {
 		// Tell the respective transport layer Observables to notify this session handler
 		UDPServer.getInstance().addObserver(this);
@@ -73,6 +82,11 @@ public class V2GCommunicationSessionHandlerSECC implements Observer {
 		setConnectionHandlerMap(new HashMap<ConnectionHandler, Thread>());
 		
 		setMessageHandler(MessageHandler.getInstance());
+
+		// *** EVerest code start ***
+		EverestEVSEController = new EverestEVSEController();
+		ObjectHolder.mqtt.publish_ready(true);
+		// *** EVerest code end ***
 	}
 
 	@Override
@@ -114,6 +128,13 @@ public class V2GCommunicationSessionHandlerSECC implements Observer {
 				V2GCommunicationSessionSECC newSession = new V2GCommunicationSessionSECC((ConnectionHandler) obj);
 				newSession.setTlsConnection((obs instanceof TLSServer) ? true : false);
 				newSession.addObserver(this);
+
+				// *** EVerest code start ***
+				EverestEVSEController.setCommSessionContext(newSession);
+				newSession.setACEvseController(EverestEVSEController);
+				newSession.setDCEvseController(EverestEVSEController);
+				// *** EVerest code end ***
+
 				getV2gCommunicationSessions().put(ipAddress, newSession);
 				
 				manageConnectionHandlers((ConnectionHandler) obj);

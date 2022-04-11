@@ -70,6 +70,14 @@ public class WaitForAuthorizationRes extends ClientState {
 				getCommSessionContext().setChargeParameterDiscoveryReq(chargeParameterDiscoveryReq);
 				
 				return getSendMessage(chargeParameterDiscoveryReq, V2GMessages.CHARGE_PARAMETER_DISCOVERY_RES);
+
+			} else if (authorizationRes.getEVSEProcessing().equals(EVSEProcessingType.ONGOING_WAITING_FOR_CUSTOMER_INTERACTION)) {
+
+				getLogger().debug("EVSEProcessing was set to ONGOING_WAITING_FOR_CUSTOMER_INTERACTION");
+				AuthorizationReqType authorizationReq = getAuthorizationReq(null);
+
+				return getSendMessage(authorizationReq, V2GMessages.AUTHORIZATION_RES);
+
 			} else {
 				getLogger().debug("EVSEProcessing was set to ONGOING");
 				

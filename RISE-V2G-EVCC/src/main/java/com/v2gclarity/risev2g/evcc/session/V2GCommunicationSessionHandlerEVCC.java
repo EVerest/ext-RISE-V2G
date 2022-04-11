@@ -33,11 +33,14 @@ import java.util.Observer;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.v2gclarity.risev2g.evcc.evController.EverestEVController;
 import com.v2gclarity.risev2g.evcc.transportLayer.StatefulTransportLayerClient;
 import com.v2gclarity.risev2g.evcc.transportLayer.TCPClient;
 import com.v2gclarity.risev2g.evcc.transportLayer.TLSClient;
 import com.v2gclarity.risev2g.evcc.transportLayer.UDPClient;
 import com.v2gclarity.risev2g.shared.enumerations.GlobalValues;
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
 import com.v2gclarity.risev2g.shared.enumerations.V2GMessages;
 import com.v2gclarity.risev2g.shared.messageHandling.MessageHandler;
 import com.v2gclarity.risev2g.shared.messageHandling.PauseSession;
@@ -50,6 +53,8 @@ import com.v2gclarity.risev2g.shared.v2gMessages.SECCDiscoveryReq;
 import com.v2gclarity.risev2g.shared.v2gMessages.SECCDiscoveryRes;
 import com.v2gclarity.risev2g.shared.v2gMessages.appProtocol.AppProtocolType;
 import com.v2gclarity.risev2g.shared.v2gMessages.appProtocol.SupportedAppProtocolReq;
+import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.EnergyTransferModeType;
+import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.PaymentOptionType;
 
 
 public class V2GCommunicationSessionHandlerEVCC implements Observer {
@@ -63,8 +68,9 @@ public class V2GCommunicationSessionHandlerEVCC implements Observer {
 	private V2GTPMessage v2gTpMessage;
 	private Thread transportLayerThread;
 	private StatefulTransportLayerClient transportLayerClient;
-	
-	public V2GCommunicationSessionHandlerEVCC() {	
+	private EverestEVController everestEVController;
+
+	public V2GCommunicationSessionHandlerEVCC(PaymentOptionType payment, EnergyTransferModeType energymode) {	
 		setMessageHandler(MessageHandler.getInstance());
 		
 		setSecurity(
@@ -74,6 +80,8 @@ public class V2GCommunicationSessionHandlerEVCC implements Observer {
 		);
 		
 		setSessionRetryCounter(0);
+
+		everestEVController = new EverestEVController(payment, energymode);
 		
 		initialize();
 	}
@@ -143,6 +151,8 @@ public class V2GCommunicationSessionHandlerEVCC implements Observer {
 			if (!startTransportLayerClient(seccDiscoveryRes, seccAddress)) return false;
 			
 			setV2gCommunicationSessionEVCC(new V2GCommunicationSessionEVCC(getTransportLayerClient()));
+			this.everestEVController.setCommSessionContext(getV2gCommunicationSessionEVCC());
+			getV2gCommunicationSessionEVCC().setEvController(this.everestEVController);
 			
 			/*
 			 * Tell the TCP- or TLSClient to notify if 
@@ -160,6 +170,7 @@ public class V2GCommunicationSessionHandlerEVCC implements Observer {
 			sendSupportedAppProtocolReq();
 		} else {
 			getLogger().fatal("Maximum number of SECCDiscoveryReq messages reached");
+			ObjectHolder.ev_mqtt.mqtt_disconnect();
 			return false;
 		}
 		
@@ -217,7 +228,7 @@ public class V2GCommunicationSessionHandlerEVCC implements Observer {
 			// In case of pausing or terminating a session the transport layer client must be stopped
 			getTransportLayerClient().stop();
 			getTransportLayerThread().interrupt();
-			
+
 			if (obj instanceof PauseSession) {
 				/*
 				 * If some action is needed by the sessionHandler when pausing, it can be done here.

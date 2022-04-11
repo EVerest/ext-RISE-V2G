@@ -39,13 +39,13 @@ public class Mqtt {
         }
 
         public void messageArrived(String topic, MqttMessage message) throws Exception {
-            if(topic == basePath+"/cmd") {
+            if (topic.equals(basePath+"/cmd")) {
                 JSONObject data = (JSONObject)JSONValue.parse(new String(message.getPayload()));
                 String key = (String) data.get("impl_id") + "|" + (String) data.get("cmd");
                 if(cmd_handlers.containsKey(key)) {
                     cmd_handlers.get(key).handler((JSONObject)data.get("args"));
                 }
-            } else if(topic == basePath+"/ready") {
+            } else if (topic.equals(basePath+"/ready")) {
                 boolean ready = (boolean)JSONValue.parse(new String(message.getPayload()));
                 if(ready_handler != null && ready) {
                     ready_handler.handler();
@@ -57,10 +57,10 @@ public class Mqtt {
         }
     }
     
-    public Mqtt(String host, String port, String basePath) {
+    public Mqtt(String host, String port, String basePath, String clientId) {
         try {
             this.basePath = basePath;
-            client = new MqttClient("tcp://"+host+":"+port, "rise-v2g_java_external_mqtt", new MemoryPersistence());
+            client = new MqttClient("tcp://"+host+":"+port, clientId, new MemoryPersistence());
             MqttConnectOptions connOpts = new MqttConnectOptions();
             client.setCallback(new OnMessageCallback());
             client.connect(connOpts);
@@ -105,5 +105,16 @@ public class Mqtt {
     
     public void handle_ready(READY_HANDLER ready_handler) {
         this.ready_handler = ready_handler;
+    }
+
+    public void mqtt_disconnect() {
+        try {
+            client.disconnect();
+            client.close();
+        } catch (MqttException e) {
+            logger.error(e.getMessage());
+            e.printStackTrace();
+            System.exit(3);
+        }
     }
 }

@@ -39,6 +39,12 @@ import com.v2gclarity.risev2g.shared.v2gMessages.appProtocol.SupportedAppProtoco
 import com.v2gclarity.risev2g.shared.v2gMessages.appProtocol.SupportedAppProtocolRes;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.BodyBaseType;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONArray;
+// *** EVerest code end ***
+
 public class WaitForSupportedAppProtocolReq extends ServerState {
 	
 	private SupportedAppProtocolRes supportedAppProtocolRes;
@@ -61,6 +67,9 @@ public class WaitForSupportedAppProtocolReq extends ServerState {
 			Collections.sort(supportedAppProtocolReq.getAppProtocol(), (appProtocol1, appProtocol2) ->
 				Short.compare(appProtocol1.getPriority(), appProtocol2.getPriority()));
 			
+			// *** EVerest code start ***
+			JSONArray json_array = new JSONArray();
+			// *** EVerest code end ***
 			/*
 			 * If protocol and major version matches with more than one supported protocol,
 			 * choose the one with highest priority
@@ -70,6 +79,17 @@ public class WaitForSupportedAppProtocolReq extends ServerState {
 				 * A getSupportedAppProtocols().contains(evccAppProtocol) does not work here since 
 				 * priority and schemaID are not provided in getSupportedAppProtocols()
 				 */
+				// *** EVerest code start ***
+				JSONObject obj = new JSONObject();
+				obj.put("ProtocolNamespace", evccAppProtocol.getProtocolNamespace().toString());
+				obj.put("VersionNumberMajor", evccAppProtocol.getVersionNumberMajor());
+				obj.put("VersionNumberMinor", evccAppProtocol.getVersionNumberMinor());
+				obj.put("SchemaID", evccAppProtocol.getSchemaID());
+				obj.put("Priority", evccAppProtocol.getPriority());
+
+				json_array.add(obj);
+				// *** EVerest code end ***
+
 				for (AppProtocolType seccAppProtocol : getSupportedAppProtocols()) {
 					if (evccAppProtocol.getProtocolNamespace().equals(seccAppProtocol.getProtocolNamespace()) &&
 						evccAppProtocol.getVersionNumberMajor() == seccAppProtocol.getVersionNumberMajor()) {
@@ -86,7 +106,11 @@ public class WaitForSupportedAppProtocolReq extends ServerState {
 				
 				if (match) break;
 			}
-				
+			
+			// *** EVerest code start ***
+			ObjectHolder.mqtt.publish_var("charger", "EV_AppProtocol", json_array);
+			// *** EVerest code end ***
+
 			supportedAppProtocolRes.setResponseCode(responseCode);
 		} else if (message instanceof SECCDiscoveryReq) {
 			getLogger().debug("Another SECCDiscoveryReq was received, changing to state WaitForSECCDiscoveryReq");

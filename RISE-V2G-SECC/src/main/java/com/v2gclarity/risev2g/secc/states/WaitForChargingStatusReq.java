@@ -59,9 +59,18 @@ public class WaitForChargingStatusReq extends ServerState {
 			 * Change EVSENotificationType to NONE if you want more than one charge loop iteration, 
 			 * but then make sure the EV is stopping the charge loop
 			 */
-			chargingStatusRes.setACEVSEStatus(
-					getCommSessionContext().getACEvseController().getACEVSEStatus(EVSENotificationType.NONE)
-			);
+
+			if ( ((EverestEVSEController) getCommSessionContext().getACEvseController()).getStopCharging()) {
+				chargingStatusRes.setACEVSEStatus(
+					getCommSessionContext().getACEvseController().getACEVSEStatus(EVSENotificationType.STOP_CHARGING));
+			} else {
+				chargingStatusRes.setACEVSEStatus(
+					getCommSessionContext().getACEvseController().getACEVSEStatus(EVSENotificationType.NONE));
+			}
+
+			if (((EverestEVSEController)getCommSessionContext().getACEvseController()).getEVSEMaxCurrent() != null) {
+				chargingStatusRes.setEVSEMaxCurrent(((EverestEVSEController)getCommSessionContext().getACEvseController()).getEVSEMaxCurrent());
+			}
 			
 			// Optionally indicate that the EVCC is required to send a MeteringReceiptReq message 
 			if (getCommSessionContext().getSelectedPaymentOption().equals(PaymentOptionType.EXTERNAL_PAYMENT)) {
@@ -71,7 +80,7 @@ public class WaitForChargingStatusReq extends ServerState {
 				// Only in PnC mode according to [V2G2-691]
                 // *** EVerest code start ***
                 //chargingStatusRes.setReceiptRequired(false);
-                chargingStatusRes.setReceiptRequired(((EverestACEVSEController)getCommSessionContext().getACEvseController()).getReceiptRequired());
+                chargingStatusRes.setReceiptRequired(((EverestEVSEController)getCommSessionContext().getACEvseController()).getReceiptRequired());
                 // *** EVerest code end ***
 			}
 			
