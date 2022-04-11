@@ -31,9 +31,20 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SessionSetupReqType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SessionSetupResType;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
+// *** EVerest code end ***
+
 public class WaitForSessionSetupReq extends ServerState {
 	
 	private SessionSetupResType sessionSetupRes; 
+
+	// *** EVerest code start ***
+	private static final char[] HEX_VALUES = "0123456789ABCDEF".toCharArray();
+	private static final byte COLON_COUNT = 5;
+	// *** EVerest code end ***
 	
 	public WaitForSessionSetupReq(V2GCommunicationSessionSECC commSessionContext) {
 		super(commSessionContext);
@@ -43,6 +54,21 @@ public class WaitForSessionSetupReq extends ServerState {
 	@Override
 	public ReactionToIncomingMessage processIncomingMessage(Object message) {
 		if (isIncomingMessageValid(message, SessionSetupReqType.class, sessionSetupRes)) {
+
+			// *** EVerest code start ***
+            V2GMessage v2gMessageReq = (V2GMessage) message;
+			SessionSetupReqType sessionSetupReq = 
+				(SessionSetupReqType) v2gMessageReq.getBody().getBodyElement().getValue();
+
+			String evccid = new String(byte2Hex(sessionSetupReq.getEVCCID()));
+            ObjectHolder.mqtt.publish_var("charger", "EVCCIDD", evccid);
+ 
+			((EverestEVSEController) getCommSessionContext().getEvseController()).resetStopCharging();
+			((EverestEVSEController) getCommSessionContext().getEvseController()).resetauthorizationOkay();
+			((EverestEVSEController) getCommSessionContext().getEvseController()).resetContactorStatus();
+			((EverestEVSEController) getCommSessionContext().getEvseController()).resetRCDError();
+            // *** EVerest code end ***
+
 			sessionSetupRes.setEVSEID(getCommSessionContext().getEvseController().getEvseID());
 			
 			// Unix time stamp is needed (seconds instead of milliseconds)
@@ -69,5 +95,25 @@ public class WaitForSessionSetupReq extends ServerState {
 	public BodyBaseType getResponseMessage() {
 		return sessionSetupRes;
 	}
+
+	// *** EVerest code start ***
+	private char[] byte2Hex(byte[] array) {
+
+		char[] hexchar = new char[array.length * 2 + COLON_COUNT];
+
+		int v = array[0] & 0xFF;
+		hexchar[0] = HEX_VALUES[v >>> 4];
+		hexchar[1] = HEX_VALUES[v & 0x0F];
+
+		for (int j = 1; j < array.length; j++) {
+			v = array[j] & 0xFF;
+			hexchar[j * 3 - 1] = ':';
+			hexchar[j * 3 + 0] = HEX_VALUES[v >>> 4];
+			hexchar[j * 3 + 1] = HEX_VALUES[v & 0x0F];
+		}
+
+		return hexchar;
+	}
+	// *** EVerest code end ***
 
 }

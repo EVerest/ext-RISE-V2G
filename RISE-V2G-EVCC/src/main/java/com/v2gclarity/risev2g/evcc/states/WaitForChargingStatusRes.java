@@ -37,6 +37,11 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ChargingStatusResType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.MeteringReceiptReqType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 
+
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+// *** EVerest code end ***
+
 public class WaitForChargingStatusRes extends ClientState {
 
 	public WaitForChargingStatusRes(V2GCommunicationSessionEVCC commSessionContext) {
@@ -87,6 +92,11 @@ public class WaitForChargingStatusRes extends ClientState {
 				
 				return getSendMessage(meteringReceiptReq, V2GMessages.METERING_RECEIPT_RES);
 			}
+
+			// *** EVerest code start ***
+			double AC_EVSEMaxCurrent = chargingStatusRes.getEVSEMaxCurrent().getValue() * Math.pow(10, chargingStatusRes.getEVSEMaxCurrent().getMultiplier());
+			ObjectHolder.ev_mqtt.publish_var("ev", "AC_EVSEMaxCurrent", AC_EVSEMaxCurrent);
+			// *** EVerest code end ***
 				
 			// Check for EVSEMaxCurrent and tell the EV
 			if (chargingStatusRes.getEVSEMaxCurrent() != null)
@@ -96,6 +106,7 @@ public class WaitForChargingStatusRes extends ClientState {
 			switch (chargingStatusRes.getACEVSEStatus().getEVSENotification()) {
 				case STOP_CHARGING:
 					getCommSessionContext().setChargingSession(ChargingSessionType.TERMINATE);
+					ObjectHolder.ev_mqtt.publish_var("ev", "AC_StopFromCharger", null);;
 					
 					return getSendMessage(getPowerDeliveryReq(ChargeProgressType.STOP), 
 										  V2GMessages.POWER_DELIVERY_RES,

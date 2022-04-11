@@ -23,6 +23,7 @@
  *******************************************************************************/
 package com.v2gclarity.risev2g.secc.states;
 
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
 import com.v2gclarity.risev2g.secc.session.V2GCommunicationSessionSECC;
 import com.v2gclarity.risev2g.shared.enumerations.V2GMessages;
 import com.v2gclarity.risev2g.shared.messageHandling.ReactionToIncomingMessage;
@@ -96,8 +97,7 @@ public class WaitForServiceDiscoveryReq extends ServerState {
 	
 	public ChargeServiceType getChargeService() {
 		SupportedEnergyTransferModeType supportedEnergyTransferModes = new SupportedEnergyTransferModeType();
-		supportedEnergyTransferModes.getEnergyTransferMode().addAll(
-				getCommSessionContext().getSupportedEnergyTransferModes());
+		supportedEnergyTransferModes.getEnergyTransferMode().addAll(((EverestEVSEController)getCommSessionContext().getEvseController()).getEnergyTransferModes());
 		
 		ChargeServiceType chargeService = new ChargeServiceType();
 		chargeService.setSupportedEnergyTransferMode(supportedEnergyTransferModes);
@@ -116,7 +116,7 @@ public class WaitForServiceDiscoveryReq extends ServerState {
 		 */
 		chargeService.setServiceScope("chargingServiceScope");
 		
-		boolean isChargingForFree = ((boolean) MiscUtils.getPropertyValue("charging.free"));
+		boolean isChargingForFree = ((EverestEVSEController)getCommSessionContext().getEvseController()).getFreeService();
 		chargeService.setFreeService(isChargingForFree);
 		
 		return chargeService;

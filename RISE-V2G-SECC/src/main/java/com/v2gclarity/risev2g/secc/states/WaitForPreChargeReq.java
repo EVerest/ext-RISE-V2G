@@ -34,6 +34,11 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.PreChargeResType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController; 
+// *** EVerest code end ***
+
 public class WaitForPreChargeReq extends ServerState {
 
 	private PreChargeResType preChargeRes;
@@ -50,14 +55,26 @@ public class WaitForPreChargeReq extends ServerState {
 			PreChargeReqType preChargeReq = 
 					(PreChargeReqType) v2gMessageReq.getBody().getBodyElement().getValue();
 			
+			EVSENotificationType notification = EVSENotificationType.NONE;
+			if (((EverestEVSEController)getCommSessionContext().getDCEvseController()).getStopCharging()) {
+				notification = EVSENotificationType.STOP_CHARGING;
+			}
+				
+			// *** EVerest code start ***
+			ObjectHolder.mqtt.publish_var("charger", "DC_EVReady", preChargeReq.getDCEVStatus().isEVReady());
+			ObjectHolder.mqtt.publish_var("charger", "DC_EVErrorCode", preChargeReq.getDCEVStatus().getEVErrorCode().value());
+			ObjectHolder.mqtt.publish_var("charger", "DC_EVRESSSOC", preChargeReq.getDCEVStatus().getEVRESSSOC());
+			double DC_EVTargetVoltage = preChargeReq.getEVTargetVoltage().getValue() * Math.pow(10, preChargeReq.getEVTargetVoltage().getMultiplier());
+			ObjectHolder.mqtt.publish_var("charger", "DC_EVTargetVoltage", DC_EVTargetVoltage);
+			double DC_EVTargetCurrent = preChargeReq.getEVTargetCurrent().getValue() * Math.pow(10, preChargeReq.getEVTargetCurrent().getMultiplier());
+			ObjectHolder.mqtt.publish_var("charger", "DC_EVTargetCurrent", DC_EVTargetCurrent);
+			// *** EVerest code end ***
+
 			// TODO how to react to failure status of DCEVStatus of cableCheckReq?
 			
 			IDCEVSEController evseController = (IDCEVSEController) getCommSessionContext().getDCEvseController();
-			
-			evseController.setTargetCurrent(preChargeReq.getEVTargetCurrent());
-			evseController.setTargetVoltage(preChargeReq.getEVTargetVoltage());
 
-			preChargeRes.setDCEVSEStatus(evseController.getDCEVSEStatus(EVSENotificationType.NONE));
+			preChargeRes.setDCEVSEStatus(evseController.getDCEVSEStatus(notification));
 			preChargeRes.setEVSEPresentVoltage(evseController.getPresentVoltage());
 			
 			((ForkState) getCommSessionContext().getStates().get(V2GMessages.FORK))

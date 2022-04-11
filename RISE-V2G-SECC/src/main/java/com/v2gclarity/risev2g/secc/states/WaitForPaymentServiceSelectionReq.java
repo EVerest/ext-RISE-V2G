@@ -61,13 +61,8 @@ public class WaitForPaymentServiceSelectionReq extends ServerState {
             
             
             // *** EVerest code start ***
-            // AC is default if unset, like in method getEvseController of V2GCommunicationSessionSECC
-            if (getCommSessionContext().getRequestedEnergyTransferMode() == null || getCommSessionContext().getRequestedEnergyTransferMode().toString().startsWith("AC")) 
-                ObjectHolder.mqtt.publish_var("ac_charger", "selected_payment_option", paymentServiceSelectionReq.getSelectedPaymentOption().value());
-            else 
-                ObjectHolder.mqtt.publish_var("dc_charger", "selected_payment_option", paymentServiceSelectionReq.getSelectedPaymentOption().value());
-            // *** EVerest code start ***
-            
+            ObjectHolder.mqtt.publish_var("charger", "SelectedPaymentOption", paymentServiceSelectionReq.getSelectedPaymentOption().value());
+            // *** EVerest code end ***
             
 			if (isResponseCodeOK(paymentServiceSelectionReq)) {
 				// see [V2G2-551]

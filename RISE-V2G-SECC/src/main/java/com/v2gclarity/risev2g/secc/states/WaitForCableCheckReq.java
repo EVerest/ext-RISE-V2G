@@ -23,6 +23,7 @@
  *******************************************************************************/
 package com.v2gclarity.risev2g.secc.states;
 
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
 import com.v2gclarity.risev2g.secc.evseController.IDCEVSEController;
 import com.v2gclarity.risev2g.secc.session.V2GCommunicationSessionSECC;
 import com.v2gclarity.risev2g.shared.enumerations.V2GMessages;
@@ -36,14 +37,27 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.IsolationLevelType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+// *** EVerest code end ***
+
 public class WaitForCableCheckReq extends ServerState {
 
 	private CableCheckResType cableCheckRes;
 	private boolean evseProcessingFinished;
+
+	// *** EVerest code start ***
+	private boolean isolationCheckRequested;
+	// *** EVerest code end ***
 	
 	public WaitForCableCheckReq(V2GCommunicationSessionSECC commSessionContext) {
 		super(commSessionContext);
 		cableCheckRes = new CableCheckResType();
+
+		// *** EVerest code start ***
+		setIsolationCheckRequested(false);
+		setEvseProcessingFinished(false);
+		// *** EVerest code end ***
 	}
 	
 	@Override
@@ -53,6 +67,29 @@ public class WaitForCableCheckReq extends ServerState {
 			CableCheckReqType cableCheckReq = 
 					(CableCheckReqType) v2gMessageReq.getBody().getBodyElement().getValue();
 			
+			// *** EVerest code start ***
+			EverestEVSEController everestController = (EverestEVSEController)getCommSessionContext().getEvseController(); 
+
+			if (getIsolationCheckRequested() == false) {
+				ObjectHolder.mqtt.publish_var("charger", "Require_EVSEIsolationCheck", null);
+				setIsolationCheckRequested(true);
+				everestController.setIsolationMonitoringActive(true);
+				ObjectHolder.mqtt.publish_var("charger", "DC_EVReady", cableCheckReq.getDCEVStatus().isEVReady());
+	      			ObjectHolder.mqtt.publish_var("charger", "DC_EVErrorCode", cableCheckReq.getDCEVStatus().getEVErrorCode().value());
+			ObjectHolder.mqtt.publish_var("charger", "DC_EVRESSSOC", cableCheckReq.getDCEVStatus().getEVRESSSOC());
+			} else {
+				if (!(everestController.getIsolationLevel().equals(IsolationLevelType.INVALID))) {
+					setEvseProcessingFinished(true);
+				}
+			}
+			// *** EVerest code end ***
+
+			EVSENotificationType notification = EVSENotificationType.NONE;
+			if (((EverestEVSEController)getCommSessionContext().getDCEvseController()).getStopCharging()) {
+				notification = EVSENotificationType.STOP_CHARGING;
+			}
+			cableCheckRes.setDCEVSEStatus(getCommSessionContext().getDCEvseController().getDCEVSEStatus(notification));
+			
 			// TODO how to react to failure status of DCEVStatus of cableCheckReq?
 			
 			/*
@@ -61,16 +98,19 @@ public class WaitForCableCheckReq extends ServerState {
 			 * (if EVSEProcessing == ONGOING, maybe because of EVSE_IsolationMonitoringActive,
 			 * within a certain timeout, then the status must be different)
 			 */
-			setEvseProcessingFinished(true);
+			
+			//setEvseProcessingFinished(true);
 			
 			if (isEvseProcessingFinished()) {
 				// As soon as EVSEProcessing is set to Finished, the IsolationLevelType should be set to valid
 				getCommSessionContext().getDCEvseController().setIsolationLevel(IsolationLevelType.VALID);
 				
+				// *** EVerest code start ***
+				((EverestEVSEController) getCommSessionContext().getDCEvseController()).setIsolationMonitoringActive(false);
+				// *** EVerest code end ***
+
 				cableCheckRes.setEVSEProcessing(EVSEProcessingType.FINISHED);
-				cableCheckRes.setDCEVSEStatus(
-						((IDCEVSEController) getCommSessionContext().getDCEvseController()).getDCEVSEStatus(EVSENotificationType.NONE)
-						);
+				
 				return getSendMessage(cableCheckRes, V2GMessages.PRE_CHARGE_REQ);
 			} else {
 				cableCheckRes.setEVSEProcessing(EVSEProcessingType.ONGOING);
@@ -103,4 +143,13 @@ public class WaitForCableCheckReq extends ServerState {
 		return cableCheckRes;
 	}
 
+	// *** EVerest code start ***
+	private boolean getIsolationCheckRequested() {
+		return isolationCheckRequested;
+	}
+
+	private void setIsolationCheckRequested(boolean isolationCheckRequested) {
+		this.isolationCheckRequested = isolationCheckRequested;
+	}
+	// *** EVerest code end ***
 }

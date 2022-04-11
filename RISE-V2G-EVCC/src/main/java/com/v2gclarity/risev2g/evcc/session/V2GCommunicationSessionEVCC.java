@@ -137,10 +137,6 @@ public class V2GCommunicationSessionEVCC extends V2GCommunicationSession impleme
 		setStartState(getStates().get(V2GMessages.SUPPORTED_APP_PROTOCOL_RES));
 		setCurrentState(getStartState());
 		
-		// configure which EV controller implementation to use
-		// TODO the EV controller needs to run as a separate Thread (to receive notifications from the EV and to avoid blocking calls to the controller)
-		setEvController(EVCCImplementationFactory.createEVController(this));
-		
 		/*
 		 * Is needed for measuring the time span between transition to state B (plug-in) and receipt 
 		 * of a SessionSetupRes (see V2G_EVCC_COMMUNICATION_SETUP_TIMEOUT in TimeRestrictions.java)

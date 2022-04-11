@@ -8,6 +8,7 @@ import com.v2gclarity.risev2g.shared.misc.Mqtt;
 
 public class ObjectHolder {
     public static Mqtt mqtt;
+	public static Mqtt ev_mqtt;
     
     /**
 	 * Takes a physical quantitiy (composited with a value and a unit) and returns it as PhysicalDataType
@@ -16,21 +17,28 @@ public class ObjectHolder {
 	 * @return The physical quantity as PhysicalDataType
 	 */
 	public static PhysicalValueType doubleToPhysicalValue(double value, UnitSymbolType unit) {
-		short exponent = 0;
-		for(exponent = 0; exponent < 3; exponent++) {
-			if(value * (10 ^ exponent) > Short.MAX_VALUE) {
-				exponent -= 1;
+		
+		byte exponent = 0;
+
+		if ((value - (long) value) != 0) {
+			exponent = 2;
+		}
+		
+		for (byte i = exponent; i > -4 ; i--) {
+			if (value * Math.pow(10, i) < Short.MAX_VALUE) {
+				exponent = i;
 				break;
 			}
 		}
+
 		PhysicalValueType retVal = new PhysicalValueType();
 		retVal.setMultiplier((byte) -exponent);
 		retVal.setUnit(unit);
-		retVal.setValue((short) (value * (10 ^ exponent)));
+		retVal.setValue((short) (value * Math.pow(10, exponent)));
 		return retVal;
 	}
 	
 	public static double physicalValueToDouble(PhysicalValueType value) {
-        return ((double) value.getValue()) * (10 ^ value.getMultiplier());
+        return ((double) value.getValue() * Math.pow(10, value.getMultiplier()));
     }
 }

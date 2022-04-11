@@ -23,6 +23,7 @@
  *******************************************************************************/
 package com.v2gclarity.risev2g.secc.states;
 
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
 import com.v2gclarity.risev2g.secc.session.V2GCommunicationSessionSECC;
 import com.v2gclarity.risev2g.shared.enumerations.V2GMessages;
 import com.v2gclarity.risev2g.shared.messageHandling.ReactionToIncomingMessage;
@@ -33,6 +34,10 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SessionStopReqType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SessionStopResType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
+
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+// *** EVerest code end ***
 
 public class WaitForSessionStopReq extends ServerState {
 
@@ -49,6 +54,10 @@ public class WaitForSessionStopReq extends ServerState {
 			V2GMessage v2gMessageReq = (V2GMessage) message;
 			SessionStopReqType sessionStopReq = 
 					(SessionStopReqType) v2gMessageReq.getBody().getBodyElement().getValue();
+
+			// *** EVerest code start ***
+			ObjectHolder.mqtt.publish_var("charger", "EV_ChargingSession",sessionStopReq.getChargingSession().value());
+			// *** EVerest code end ***
 			
 			getLogger().info("EV indicated to " + sessionStopReq.getChargingSession() + " the charging session");
 			

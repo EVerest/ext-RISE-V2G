@@ -34,50 +34,57 @@ import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 
 import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
 import com.v2gclarity.risev2g.shared.misc.Mqtt;
+import org.json.simple.JSONObject;
 
 public class StartSECC {
-	
+
 	public static void main(String[] args) {
 		final Logger logger = LogManager.getLogger(StartSECC.class.getSimpleName());
 		MiscUtils.loadProperties(GlobalValues.SECC_CONFIG_PROPERTIES_PATH.toString());
-		
+
 		UDPServer udpServer = UDPServer.getInstance();
 		TCPServer tcpServer = TCPServer.getInstance();
 		TLSServer tlsServer = TLSServer.getInstance();
-		
+
+		// *** EVerest code start ***
+		logger.info("STARTED WITH ARGS:");
+		for (String arg : args) {
+			logger.info(arg);
+		}
+		ObjectHolder.mqtt = new Mqtt(args[0], args[1], args[2], "rise-v2g_java_external_mqtt_secc");
+		MiscUtils.setNetworkInterface((String) args[3]);
+
+		// *** EVerest code end ***
+
 		if (!udpServer.initialize() || !tlsServer.initialize() || !tcpServer.initialize()) {
 			logger.fatal("Unable to start SECC because UDP, TCP or TLS server could not be initialized");
 		} else {
 			Thread udpServerThread = new Thread(udpServer);
 			udpServerThread.setName("UDPServerThread");
-			
+
 			Thread tcpServerThread = new Thread(tcpServer);
 			tcpServerThread.setName("TCPServerThread");
-			
+
 			Thread tlsServerThread = new Thread(tlsServer);
 			tlsServerThread.setName("TLSServerThread");
-			
-			// All transport layer threads need to be initialized before initializing the SECC session handler.
+
+			// All transport layer threads need to be initialized before initializing the
+			// SECC session handler.
 			new V2GCommunicationSessionHandlerSECC();
-			
+
 			/*
-			 * To avoid possible race conditions, the transport layer threads need to be started AFTER the SECC
-			 * session handler has been initialized. Otherwise the situation might occur that the UDPServer is 
-			 * receiving a UDP client packet and tries to access the MessageHandler object before this object has
+			 * To avoid possible race conditions, the transport layer threads need to be
+			 * started AFTER the SECC
+			 * session handler has been initialized. Otherwise the situation might occur
+			 * that the UDPServer is
+			 * receiving a UDP client packet and tries to access the MessageHandler object
+			 * before this object has
 			 * been created by the SECC session handler.
 			 */
 			udpServerThread.start();
 			tcpServerThread.start();
 			tlsServerThread.start();
 		}
-		
-		// *** EVerest code start ***
-        logger.info("STARTED WITH ARGS:");
-        for(String arg : args) {
-            logger.info(arg);
-        }
-        ObjectHolder.mqtt = new Mqtt(args[0], args[1], args[2]);
-        ObjectHolder.mqtt.publish_ready(true);
-        // *** EVerest code end ***
+
 	}
 }

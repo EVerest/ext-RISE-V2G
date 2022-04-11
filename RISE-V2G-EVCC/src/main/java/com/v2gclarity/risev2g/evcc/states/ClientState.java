@@ -78,6 +78,10 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SessionStopResType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.WeldingDetectionResType;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+// *** EVerest code end ***
+
 /**
  * Some request messages are to be sent from different states which makes it more convenient (having
  * less code and being less error-prone) to keep the creation of those messages in one single class.
@@ -405,9 +409,11 @@ public abstract class ClientState extends State {
 		
 		if (chargeProgress.equals(ChargeProgressType.START)) {
 			// Signal needed state change after sending PowerDeliveryReq in AC charging mode 
-			if (getCommSessionContext().getRequestedEnergyTransferMode().toString().startsWith("AC"))
+			if (getCommSessionContext().getRequestedEnergyTransferMode().toString().startsWith("AC")) {
 				getCommSessionContext().setChangeToState(CPStates.STATE_C);
-			
+				ObjectHolder.ev_mqtt.publish_var("ev", "AC_EVPowerReady", true);
+			}
+				
 			ChargingProfileType chargingProfile = getCommSessionContext().getEvController().getChargingProfile();
 			powerDeliveryReq.setChargingProfile(chargingProfile);
 			
@@ -456,11 +462,11 @@ public abstract class ClientState extends State {
 		EnergyTransferModeType requestedEnergyTransferMode = null;
 		
 		// Check if an EnergyTransferModeType has been requested in a previously paused session 
-		if (getCommSessionContext().isOldSessionJoined()) 
-			requestedEnergyTransferMode = (EnergyTransferModeType) MiscUtils.getPropertyValue("energy.transfermode.requested");
+		// if (getCommSessionContext().isOldSessionJoined()) 
+		// 	requestedEnergyTransferMode = (EnergyTransferModeType) MiscUtils.getPropertyValue("energy.transfermode.requested");
 			
-		if (requestedEnergyTransferMode == null) 
-			requestedEnergyTransferMode = getCommSessionContext().getEvController().getRequestedEnergyTransferMode();
+		// if (requestedEnergyTransferMode == null) 
+		requestedEnergyTransferMode = getCommSessionContext().getEvController().getRequestedEnergyTransferMode();
 		
 		// We need to save the requested energy transfer mode in the session variable to be able to store in the properties file during pausing
 		getCommSessionContext().setRequestedEnergyTransferMode(requestedEnergyTransferMode);

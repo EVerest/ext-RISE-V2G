@@ -26,6 +26,7 @@ package com.v2gclarity.risev2g.secc.states;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import com.v2gclarity.risev2g.secc.evseController.EverestEVSEController;
 import com.v2gclarity.risev2g.secc.session.V2GCommunicationSessionSECC;
 import com.v2gclarity.risev2g.shared.enumerations.V2GMessages;
 import com.v2gclarity.risev2g.shared.messageHandling.ReactionToIncomingMessage;
@@ -39,14 +40,26 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SignatureType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
 
+// *** EVerest code start ***
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+// *** EVerest code end ***
+
 public class WaitForAuthorizationReq extends ServerState {
 
 	private AuthorizationResType authorizationRes;
 	private boolean authorizationFinished;
+
+	// *** EVerest code start ***
+	private boolean authorizationRequested;
+	// *** EVerest code end ***
 	
 	public WaitForAuthorizationReq(V2GCommunicationSessionSECC commSessionContext) {
 		super(commSessionContext);
 		authorizationRes = new AuthorizationResType();
+
+		// *** EVerest code start ***
+		setAuthorizationRequested(false);
+		// *** EVerest code end ***
 	}
 	
 	@Override
@@ -56,18 +69,44 @@ public class WaitForAuthorizationReq extends ServerState {
 			AuthorizationReqType authorizationReq = 
 					(AuthorizationReqType) v2gMessageReq.getBody().getBodyElement().getValue();
 			
+			PaymentOptionType selectedPaymentOption = getCommSessionContext().getSelectedPaymentOption();
+			EverestEVSEController everestController = (EverestEVSEController)getCommSessionContext().getEvseController();
+			
 			if (isResponseCodeOK(authorizationReq, v2gMessageReq.getHeader().getSignature())) {
 				/*
 				 * TODO start a Thread which authenticates the EVCC and sets the class-variable
 				 * authenticationFinished (and remove setAuthorizationFinished(true) here!)
 				 */
-				setAuthorizationFinished(true);
-				
+
+				// *** EVerest code start ***
+				if (everestController.getFreeService() == true) {
+					setAuthorizationFinished(true);
+				} else {
+					if (getAuthorizationRequested() == false) {
+						if (selectedPaymentOption.equals(PaymentOptionType.EXTERNAL_PAYMENT)) {
+							ObjectHolder.mqtt.publish_var("charger", "Require_Auth_EIM", null);
+						}
+						else {
+							ObjectHolder.mqtt.publish_var("charger", "Require_Auth_PnC", null);
+						}
+						setAuthorizationRequested(true);
+					}
+					if ((selectedPaymentOption.equals(PaymentOptionType.EXTERNAL_PAYMENT) && everestController.isAuthorizationEIMOkay()) ||
+						(selectedPaymentOption.equals(PaymentOptionType.CONTRACT) && everestController.isAuthorizationPnCOkay())) {	
+						setAuthorizationFinished(true);
+					}
+				}
+				// *** EVerest code end ***
+
 				if (isAuthorizationFinished()) {
 					authorizationRes.setEVSEProcessing(EVSEProcessingType.FINISHED);
 					return getSendMessage(authorizationRes, V2GMessages.CHARGE_PARAMETER_DISCOVERY_REQ);
 				} else {
-					authorizationRes.setEVSEProcessing(EVSEProcessingType.ONGOING);
+					if (getCommSessionContext().getSelectedPaymentOption().equals(PaymentOptionType.EXTERNAL_PAYMENT)) {
+						authorizationRes.setEVSEProcessing(EVSEProcessingType.ONGOING_WAITING_FOR_CUSTOMER_INTERACTION);
+					} else {
+						authorizationRes.setEVSEProcessing(EVSEProcessingType.ONGOING);
+					}
 					return getSendMessage(authorizationRes, V2GMessages.AUTHORIZATION_REQ);
 				}
 			} else {
@@ -142,5 +181,15 @@ public class WaitForAuthorizationReq extends ServerState {
 	public BodyBaseType getResponseMessage() {
 		return authorizationRes;
 	}
+
+	// *** EVerest code start ***
+	private boolean getAuthorizationRequested() {
+		return authorizationRequested;
+	}
+
+	private void setAuthorizationRequested (boolean authorizationRequested) {
+		this.authorizationRequested = authorizationRequested;
+	}
+	// *** EVerest code end ***
 
 }
