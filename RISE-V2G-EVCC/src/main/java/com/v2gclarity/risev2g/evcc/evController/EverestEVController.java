@@ -337,28 +337,9 @@ public class EverestEVController implements IACEVController, IDCEVController {
 
 	@Override
 	public boolean isChargingLoopActive() {
-		// Keep charging until 100 charging loops are finished
-		if (getChargingLoopCounter() < 100 && this.stop_charging == false) {
-			setChargingLoopCounter(getChargingLoopCounter() + 1);
-			
-			/*
-			 * OPTIONAL:
-			 * Trigger a renegotiation after 50 charging loops (for testing purposes); you can comment this out if you do not want to test an EV-triggered renegotiation
-			 */
-			// if (getChargingLoopCounter() == 50) {
-			// 	getCommSessionContext().setRenegotiationRequested(true);
-			// 	getLogger().debug("EV triggered a renegotiation (for testing purposes)");
-			// }
-			
+		if (this.stop_charging == false) {
 			return true;
 		} else 
-			
-			/*
-			 * OPTIONAL:
-			 * If you want to trigger a pause of the charging session, then uncomment this line
-			 */
-			//getCommSessionContext().setChargingSession(ChargingSessionType.PAUSE);
-			
 			return false;
 	}
 
