@@ -11,7 +11,7 @@ set(RISE_V2G_JARS
 add_custom_command(
     OUTPUT .risev2g_rsynced
     COMMENT "Copying RISE-V2G sources to build dir..."
-    COMMAND rsync -avq --filter='P */target' --delete "${CMAKE_CURRENT_SOURCE_DIR}/" "${CMAKE_CURRENT_BINARY_DIR}/RISE-V2G"
+    COMMAND rsync -avq --exclude="*/target" --delete "${CMAKE_CURRENT_SOURCE_DIR}/" "${CMAKE_CURRENT_BINARY_DIR}/RISE-V2G"
     COMMAND ${CMAKE_COMMAND} -E touch .risev2g_rsynced
     DEPENDS ${MAVEN_SOURCES}
 )
