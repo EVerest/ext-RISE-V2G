@@ -30,15 +30,14 @@ add_custom_target(
 )
 
 # install the rise-v2g jars and tools
-set(INSTALL_DST "3rd_party/${THIRD_PARTY_APP}")
 install(
     FILES ${RISE_V2G_JARS}
           ${CMAKE_CURRENT_SOURCE_DIR}/RISE-V2G-SECC/SECCConfig.properties
           ${CMAKE_CURRENT_SOURCE_DIR}/RISE-V2G-EVCC/EVCCConfig.properties
-    DESTINATION ${THIRD_PARTY_APP_DST}
+    DESTINATION "${THIRD_PARTY_APP_DST}/rise_v2g"
 )
 
 install(
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/RISE-V2G-Certificates
-    DESTINATION ${THIRD_PARTY_APP_DST}
+    DESTINATION "${THIRD_PARTY_APP_DST}/rise_v2g"
 )
