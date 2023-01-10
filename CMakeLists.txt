@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 3.4)
+project(RISE-V2G)
+
 # copy rise-v2g source tree to current bin dir and use maven to build it there
 # make our module target depend on the maven jar output we are using in the install below
 file(GLOB_RECURSE MAVEN_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/RISE-V2G-*/*")
