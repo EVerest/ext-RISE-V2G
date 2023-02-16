@@ -70,15 +70,15 @@ public class V2GCommunicationSessionHandlerEVCC implements Observer {
 	private StatefulTransportLayerClient transportLayerClient;
 	private EverestEVController everestEVController;
 
-	public V2GCommunicationSessionHandlerEVCC(PaymentOptionType payment, EnergyTransferModeType energymode) {	
+	public V2GCommunicationSessionHandlerEVCC(PaymentOptionType payment, EnergyTransferModeType energymode, String tls_active) {	
 		setMessageHandler(MessageHandler.getInstance());
-		
-		setSecurity(
-				(MiscUtils.getPropertyValue("tls") != null ? 
-						(byte) MiscUtils.getPropertyValue("tls") : 
-						GlobalValues.V2G_SECURITY_WITHOUT_TLS.getByteValue())
-		);
-		
+
+		if (tls_active.equals("true")) {
+			setSecurity(GlobalValues.V2G_SECURITY_WITH_TLS.getByteValue());
+		} else {
+			setSecurity(GlobalValues.V2G_SECURITY_WITHOUT_TLS.getByteValue());
+		}
+
 		setSessionRetryCounter(0);
 
 		everestEVController = new EverestEVController(payment, energymode);

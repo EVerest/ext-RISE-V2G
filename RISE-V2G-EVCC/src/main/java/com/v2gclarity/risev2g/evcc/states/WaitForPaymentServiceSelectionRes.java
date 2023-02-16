@@ -32,6 +32,7 @@ import com.v2gclarity.risev2g.shared.messageHandling.ReactionToIncomingMessage;
 import com.v2gclarity.risev2g.shared.messageHandling.TerminateSession;
 import com.v2gclarity.risev2g.shared.utils.SecurityUtils;
 import com.v2gclarity.risev2g.shared.utils.SecurityUtils.ContractCertificateStatus;
+import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.CertificateInstallationReqType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.CertificateUpdateReqType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.PaymentOptionType;
@@ -82,7 +83,7 @@ public class WaitForPaymentServiceSelectionRes extends ClientState {
 	
 	private CertificateInstallationReqType getCertificateInstallationReq() {
 		KeyStore evccKeyStore = SecurityUtils.getKeyStore(
-				GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
+				MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
 				GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString());
 		
 		CertificateInstallationReqType certInstallationReq = new CertificateInstallationReqType();
@@ -95,7 +96,7 @@ public class WaitForPaymentServiceSelectionRes extends ClientState {
 		certInstallationReq.setId("ID1");
 		certInstallationReq.setListOfRootCertificateIDs(
 				SecurityUtils.getListOfRootCertificateIDs(
-						GlobalValues.EVCC_TRUSTSTORE_FILEPATH.toString(),
+						MiscUtils.getCertsPath() + GlobalValues.EVCC_TRUSTSTORE_FILEPATH.toString(),
 						GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString()));
 		certInstallationReq.setOEMProvisioningCert(
 				SecurityUtils.getCertificateChain(
@@ -111,7 +112,7 @@ public class WaitForPaymentServiceSelectionRes extends ClientState {
 		// Set signing private key
 		setSignaturePrivateKey(SecurityUtils.getPrivateKey(
 				SecurityUtils.getKeyStore(
-						GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
+						MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
 						GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString()), 
 				GlobalValues.ALIAS_OEM_PROV_CERTIFICATE.toString())
 		);
@@ -125,7 +126,7 @@ public class WaitForPaymentServiceSelectionRes extends ClientState {
 		certificateUpdateReq.setContractSignatureCertChain(
 				SecurityUtils.getCertificateChain(
 						SecurityUtils.getKeyStore(
-								GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
+								MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
 								GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString()), 
 						GlobalValues.ALIAS_CONTRACT_CERTIFICATE.toString()));	
 		certificateUpdateReq.setEMAID(SecurityUtils.getEMAID(GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString()).getValue());
@@ -138,7 +139,7 @@ public class WaitForPaymentServiceSelectionRes extends ClientState {
 		certificateUpdateReq.setId("ID1");
 		certificateUpdateReq.setListOfRootCertificateIDs(
 				SecurityUtils.getListOfRootCertificateIDs(
-						GlobalValues.EVCC_TRUSTSTORE_FILEPATH.toString(),
+						MiscUtils.getCertsPath() + GlobalValues.EVCC_TRUSTSTORE_FILEPATH.toString(),
 						GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString()));
 		
 		// Set xml reference element
@@ -151,7 +152,7 @@ public class WaitForPaymentServiceSelectionRes extends ClientState {
 		// Set signing private key
 		setSignaturePrivateKey(SecurityUtils.getPrivateKey(
 				SecurityUtils.getKeyStore(
-						GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
+						MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
 						GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString()), 
 				GlobalValues.ALIAS_CONTRACT_CERTIFICATE.toString())
 		);

@@ -56,8 +56,8 @@ public enum GlobalValues {
 	 * keystores must not be kept inside the JAR (which is read-only). For easier handling, we put all 
 	 * keystores at the same level as the JAR.
 	 */
-	EVCC_KEYSTORE_FILEPATH("./evccKeystore.jks"),
-	EVCC_TRUSTSTORE_FILEPATH("./evccTruststore.jks"),
+	EVCC_KEYSTORE_FILEPATH("EVCC_KEYSTORE.jks"),
+	EVCC_TRUSTSTORE_FILEPATH("EVCC_TRUSTSTORE.jks"),
 	SECC_KEYSTORE_FILEPATH("./seccKeystore.jks"),
 	SECC_TRUSTSTORE_FILEPATH("./seccTruststore.jks"),
 	

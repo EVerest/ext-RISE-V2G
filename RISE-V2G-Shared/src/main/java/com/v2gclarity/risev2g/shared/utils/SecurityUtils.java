@@ -121,6 +121,7 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SubCertificatesType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.TransformType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.TransformsType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.X509IssuerSerialType;
+import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 
 import java.util.Base64;
 
@@ -997,7 +998,7 @@ public final class SecurityUtils {
 			String keyStorePassword, 
 			CertificateChainType contractCertChain,
 			ECPrivateKey contractCertPrivateKey) {
-		KeyStore keyStore = getKeyStore(GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(), keyStorePassword);
+		KeyStore keyStore = getKeyStore(MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(), keyStorePassword);
 
 		try {
 			if (isPrivateKeyValid(contractCertPrivateKey, contractCertChain)) {
@@ -1008,7 +1009,7 @@ public final class SecurityUtils {
 						getCertificateChain(contractCertChain)); 
 				
 				// Save the keystore persistently
-				try(FileOutputStream fos = new FileOutputStream(GlobalValues.EVCC_KEYSTORE_FILEPATH.toString())){
+				try(FileOutputStream fos = new FileOutputStream(MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString())){
 					keyStore.store(fos, GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString().toCharArray());
 				}
 				
@@ -1092,7 +1093,7 @@ public final class SecurityUtils {
 		X509Certificate contractCertificate = null;
 		
 		KeyStore evccKeyStore = getKeyStore(
-				GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(), 
+				MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(), 
 				GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString()
 			);
 		 
@@ -1620,7 +1621,7 @@ public final class SecurityUtils {
 	 * @return The EMAID
 	 */
 	public static EMAIDType getEMAID(String keyStorePassword) {
-		KeyStore keyStore = getKeyStore(GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(), keyStorePassword);
+		KeyStore keyStore = getKeyStore(MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(), keyStorePassword);
 		
 		try {
 			X509Certificate contractCertificate = 

@@ -36,6 +36,7 @@ import com.v2gclarity.risev2g.shared.messageHandling.ReactionToIncomingMessage;
 import com.v2gclarity.risev2g.shared.messageHandling.TerminateSession;
 import com.v2gclarity.risev2g.shared.misc.TimeRestrictions;
 import com.v2gclarity.risev2g.shared.utils.SecurityUtils;
+import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ACEVSEChargeParameterType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ChargeParameterDiscoveryResType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ChargeProgressType;
@@ -233,7 +234,7 @@ public class WaitForChargeParameterDiscoveryRes extends ClientState {
 		
 		if (salesTariffCounter > 0) {
 			X509Certificate moSubCA2Certificate = SecurityUtils.getMOSubCA2Certificate(
-													GlobalValues.EVCC_KEYSTORE_FILEPATH.toString());
+													MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString());
 			if (moSubCA2Certificate == null) {
 				getLogger().error("No MOSubCA2 certificate found, signature of SalesTariff could therefore not be verified");
 				return false;

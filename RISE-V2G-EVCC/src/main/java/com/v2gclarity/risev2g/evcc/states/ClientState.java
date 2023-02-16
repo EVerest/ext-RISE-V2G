@@ -380,8 +380,9 @@ public abstract class ClientState extends State {
 	 * @return A PaymentDetailsReq
 	 */
 	protected PaymentDetailsReqType getPaymentDetailsReq() {
+
 		KeyStore evccKeyStore = SecurityUtils.getKeyStore(
-				GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
+				MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
 				GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString());
 		PaymentDetailsReqType paymentDetailsReq = new PaymentDetailsReqType();
 		
