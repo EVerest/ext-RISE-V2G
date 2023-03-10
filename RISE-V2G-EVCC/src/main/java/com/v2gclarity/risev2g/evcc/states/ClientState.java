@@ -40,6 +40,7 @@ import com.v2gclarity.risev2g.shared.misc.State;
 import com.v2gclarity.risev2g.shared.utils.ByteUtils;
 import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 import com.v2gclarity.risev2g.shared.utils.SecurityUtils;
+import com.v2gclarity.risev2g.shared.utils.SleepUtils;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.AuthorizationReqType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.AuthorizationResType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.BodyBaseType;
@@ -323,6 +324,8 @@ public abstract class ClientState extends State {
 		currentDemandReq.setEVTargetVoltage(evController.getTargetVoltage());
 		currentDemandReq.setRemainingTimeToBulkSoC(evController.getRemainingTimeToBulkSOC());
 		currentDemandReq.setRemainingTimeToFullSoC(evController.getRemainingTimeToFullSOC());
+
+		SleepUtils.safeSleep(250);
 		
 		return currentDemandReq;
 	}
