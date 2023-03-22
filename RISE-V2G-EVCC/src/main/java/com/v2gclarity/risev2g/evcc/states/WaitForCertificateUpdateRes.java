@@ -33,6 +33,7 @@ import com.v2gclarity.risev2g.shared.enumerations.V2GMessages;
 import com.v2gclarity.risev2g.shared.messageHandling.ReactionToIncomingMessage;
 import com.v2gclarity.risev2g.shared.messageHandling.TerminateSession;
 import com.v2gclarity.risev2g.shared.utils.SecurityUtils;
+import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.CertificateUpdateResType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ResponseCodeType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SignatureType;
@@ -58,7 +59,7 @@ public class WaitForCertificateUpdateRes extends ClientState {
 			// Check complete CPS certificate chain
 			ResponseCodeType certChainResponseCode = SecurityUtils.verifyCertificateChain(
 														certificateUpdateRes.getSAProvisioningCertificateChain(),
-														GlobalValues.EVCC_TRUSTSTORE_FILEPATH.toString(),
+														MiscUtils.getCertsPath() + GlobalValues.EVCC_TRUSTSTORE_FILEPATH.toString(),
 														PKI.CPS);
 			if (!certChainResponseCode.equals(ResponseCodeType.OK)) {
 				return new TerminateSession("Provisioning certificate chain is not valid");
@@ -66,7 +67,7 @@ public class WaitForCertificateUpdateRes extends ClientState {
 			
 			ECPrivateKey contractCertPrivateKey = SecurityUtils.getPrivateKey(
 					SecurityUtils.getKeyStore(
-							GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
+							MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
 							GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString()),
 					GlobalValues.ALIAS_CONTRACT_CERTIFICATE.toString());
 			

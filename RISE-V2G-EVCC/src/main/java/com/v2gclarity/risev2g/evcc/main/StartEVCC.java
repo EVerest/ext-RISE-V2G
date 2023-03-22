@@ -41,21 +41,24 @@ public class StartEVCC {
 
 		// *** EVerest code start ***
 		logger.info("STARTED WITH ARGS:");
-        	for(String arg : args) {
-            		logger.info(arg);
-        	}
+		for(String arg : args) {
+				logger.info(arg);
+		}
 
-        	ObjectHolder.ev_mqtt = new Mqtt(args[0], args[1], args[2], "rise-v2g_java_external_mqtt_evcc");
-        	ObjectHolder.ev_mqtt.publish_ready(true);
+		ObjectHolder.ev_mqtt = new Mqtt(args[0], args[1], args[2], "rise-v2g_java_external_mqtt_evcc");
+		ObjectHolder.ev_mqtt.publish_ready(true);
 
 		MiscUtils.setNetworkInterface((String) args[5]);
 		
 		PaymentOptionType payment = PaymentOptionType.fromValue((String) args[3]);
 		EnergyTransferModeType energymode = EnergyTransferModeType.fromValue((String) args[4]);
+
+		MiscUtils.setCertsPath((String) args[6]);
+		String tls_active = (String) args[7];
 		
         	// *** EVerest code end ***
 
-		new V2GCommunicationSessionHandlerEVCC(payment, energymode);
+		new V2GCommunicationSessionHandlerEVCC(payment, energymode, tls_active);
 
 	}
 

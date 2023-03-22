@@ -38,6 +38,8 @@ import com.v2gclarity.risev2g.shared.enumerations.GlobalValues;
 import com.v2gclarity.risev2g.shared.misc.TimeRestrictions;
 import com.v2gclarity.risev2g.shared.misc.V2GTPMessage;
 import com.v2gclarity.risev2g.shared.utils.SecurityUtils;
+import com.v2gclarity.risev2g.shared.utils.MiscUtils;
+
 
 public class TLSClient extends StatefulTransportLayerClient {
 	
@@ -89,8 +91,8 @@ public class TLSClient extends StatefulTransportLayerClient {
 			 * hand only returns an InputStream, not a file resource). Thus use setSSLFactories()
 			 */
 			SecurityUtils.setSSLContext(
-					GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(), 
-					GlobalValues.EVCC_TRUSTSTORE_FILEPATH.toString(),
+					MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(), 
+					MiscUtils.getCertsPath() + GlobalValues.EVCC_TRUSTSTORE_FILEPATH.toString(),
 					GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString());
 			
 			SSLSocketFactory sslSocketFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();

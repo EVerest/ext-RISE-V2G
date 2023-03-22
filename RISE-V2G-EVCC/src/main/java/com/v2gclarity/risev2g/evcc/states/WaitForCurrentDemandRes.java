@@ -29,6 +29,7 @@ import com.v2gclarity.risev2g.shared.enumerations.V2GMessages;
 import com.v2gclarity.risev2g.shared.messageHandling.ReactionToIncomingMessage;
 import com.v2gclarity.risev2g.shared.messageHandling.TerminateSession;
 import com.v2gclarity.risev2g.shared.utils.SecurityUtils;
+import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ChargeProgressType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ChargingSessionType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ChargingStatusReqType;
@@ -75,7 +76,7 @@ public class WaitForCurrentDemandRes extends ClientState {
 				// Set signing private key
 				setSignaturePrivateKey(SecurityUtils.getPrivateKey(
 						SecurityUtils.getKeyStore(
-								GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
+								MiscUtils.getCertsPath() + GlobalValues.EVCC_KEYSTORE_FILEPATH.toString(),
 								GlobalValues.PASSPHRASE_FOR_CERTIFICATES_AND_KEYS.toString()), 
 						GlobalValues.ALIAS_CONTRACT_CERTIFICATE.toString())
 				);

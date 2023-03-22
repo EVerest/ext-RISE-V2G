@@ -51,6 +51,7 @@ public final class MiscUtils {
 
 	static String networkInterfaceConfig;
 	static boolean network_interface_set = false;
+	static String certsPath; 
 
 	public static Logger getLogger() {
 		return logger;
@@ -67,6 +68,14 @@ public final class MiscUtils {
 
 	public static String getNetworkInterface() {
 		return networkInterfaceConfig;
+	}
+
+	public static void setCertsPath(String _path) {
+		certsPath = _path;
+	}
+
+	public static String getCertsPath() {
+		return certsPath;
 	}
 
 	/**
