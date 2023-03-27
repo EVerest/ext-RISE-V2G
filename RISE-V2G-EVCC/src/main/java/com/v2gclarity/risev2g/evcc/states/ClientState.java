@@ -324,8 +324,6 @@ public abstract class ClientState extends State {
 		currentDemandReq.setEVTargetVoltage(evController.getTargetVoltage());
 		currentDemandReq.setRemainingTimeToBulkSoC(evController.getRemainingTimeToBulkSOC());
 		currentDemandReq.setRemainingTimeToFullSoC(evController.getRemainingTimeToFullSOC());
-
-		SleepUtils.safeSleep(250);
 		
 		return currentDemandReq;
 	}
