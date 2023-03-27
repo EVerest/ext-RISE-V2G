@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.TimeUnit;
 
 import com.v2gclarity.risev2g.evcc.evController.IEVController;
 import com.v2gclarity.risev2g.evcc.misc.EVCCImplementationFactory;
@@ -76,6 +77,7 @@ import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SelectedServiceListType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.SelectedServiceType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.ServiceListType;
 import com.v2gclarity.risev2g.shared.v2gMessages.msgDef.V2GMessage;
+import com.v2gclarity.risev2g.shared.utils.SleepUtils;
 
 // The state machine
 public class V2GCommunicationSessionEVCC extends V2GCommunicationSession implements Observer {
@@ -175,7 +177,13 @@ public class V2GCommunicationSessionEVCC extends V2GCommunicationSession impleme
 						terminateSession("Received incoming message is not a valid V2GTPMessage\n" + e, false);
 					}
 				}
-				
+
+				if (getCurrentState().equals(getStates().get(V2GMessages.CURRENT_DEMAND_REQ)) || getCurrentState().equals(getStates().get(V2GMessages.CURRENT_DEMAND_RES))) {
+					SleepUtils.safeSleep(TimeUnit.MILLISECONDS, 250);
+				} else {
+					SleepUtils.safeSleep(TimeUnit.MILLISECONDS, 500);
+				}
+
 				processReaction(getCurrentState().processIncomingMessage(obj));
 			} else {
 				terminateSession("Received incoming message is not a valid V2GTPMessage", false);
