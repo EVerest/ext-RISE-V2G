@@ -117,11 +117,7 @@ public class TLSClient extends StatefulTransportLayerClient {
 			 * As it turns out, "secp256r1" is already the default first entry for Java 8 (and higher versions), but you should deactivate 
 			 * the other elliptic curves by reducing the list to this one entry only.
 			 */
-			String[] enabledCipherSuites = {
-					"TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256", 
-					"TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256", // this cipher suite should be avoided, ECDH does not support perfect forward secrecy
-					"TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256"
-			};
+			String[] enabledCipherSuites = MiscUtils.getCiphersuites();
 			getTlsSocketToServer().setEnabledCipherSuites(enabledCipherSuites);
 			
 			// Set the supported TLS protocol

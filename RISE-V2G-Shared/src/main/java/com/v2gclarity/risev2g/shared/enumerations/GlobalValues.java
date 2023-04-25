@@ -26,6 +26,7 @@ package com.v2gclarity.risev2g.shared.enumerations;
 import java.util.Arrays;
 import java.util.HashMap;
 import com.v2gclarity.risev2g.shared.utils.ByteUtils;
+import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 
 
 public enum GlobalValues {
@@ -41,7 +42,7 @@ public enum GlobalValues {
 	 * However, for testing purposes it is OK to use one passphrase for every key, certificate and
 	 * keystore. This issue needs to be solved for productive use of this code.
 	 */
-	PASSPHRASE_FOR_CERTIFICATES_AND_KEYS("123456"),
+	PASSPHRASE_FOR_CERTIFICATES_AND_KEYS(MiscUtils.getKeystorePassword()),
 	
 	// Aliases for contract certificate chain and OEM provisioning certificate chain
 	ALIAS_CONTRACT_CERTIFICATE("contract_cert"),
