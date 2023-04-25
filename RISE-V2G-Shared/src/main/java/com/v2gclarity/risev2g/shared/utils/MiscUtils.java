@@ -52,6 +52,8 @@ public final class MiscUtils {
 	static String networkInterfaceConfig;
 	static boolean network_interface_set = false;
 	static String certsPath; 
+	static String[] ciphersuits;
+	static String keystorePassword;
 
 	public static Logger getLogger() {
 		return logger;
@@ -76,6 +78,22 @@ public final class MiscUtils {
 
 	public static String getCertsPath() {
 		return certsPath;
+	}
+
+	public static void setCiphersuites(String[] _ciphersuits) {
+		ciphersuits = _ciphersuits;
+	}
+
+	public static String[] getCiphersuites() {
+		return ciphersuits;
+	}
+
+	public static void setKeystorePassword(String _keystorePassword) {
+		keystorePassword = _keystorePassword;
+	}
+
+	public static String getKeystorePassword() {
+		return keystorePassword;
 	}
 
 	/**
