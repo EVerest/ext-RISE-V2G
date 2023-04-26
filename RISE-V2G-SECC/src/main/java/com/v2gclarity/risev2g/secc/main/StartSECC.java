@@ -40,7 +40,6 @@ public class StartSECC {
 
 	public static void main(String[] args) {
 		final Logger logger = LogManager.getLogger(StartSECC.class.getSimpleName());
-		MiscUtils.loadProperties(GlobalValues.SECC_CONFIG_PROPERTIES_PATH.toString());
 
 		UDPServer udpServer = UDPServer.getInstance();
 		TCPServer tcpServer = TCPServer.getInstance();
@@ -53,8 +52,11 @@ public class StartSECC {
 		}
 		ObjectHolder.mqtt = new Mqtt(args[0], args[1], args[2], "rise-v2g_java_external_mqtt_secc");
 		MiscUtils.setNetworkInterface((String) args[3]);
+		MiscUtils.setKeystorePassword("123456");
 
 		// *** EVerest code end ***
+
+		MiscUtils.loadProperties(GlobalValues.SECC_CONFIG_PROPERTIES_PATH.toString());
 
 		if (!udpServer.initialize() || !tlsServer.initialize() || !tcpServer.initialize()) {
 			logger.fatal("Unable to start SECC because UDP, TCP or TLS server could not be initialized");
