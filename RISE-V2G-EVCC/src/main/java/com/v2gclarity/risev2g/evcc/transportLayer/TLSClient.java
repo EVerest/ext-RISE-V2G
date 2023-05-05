@@ -40,6 +40,8 @@ import com.v2gclarity.risev2g.shared.misc.V2GTPMessage;
 import com.v2gclarity.risev2g.shared.utils.SecurityUtils;
 import com.v2gclarity.risev2g.shared.utils.MiscUtils;
 
+import com.v2gclarity.risev2g.shared.enumerations.ObjectHolder;
+
 
 public class TLSClient extends StatefulTransportLayerClient {
 	
@@ -212,6 +214,9 @@ public class TLSClient extends StatefulTransportLayerClient {
 	@Override
 	public void stop() {
 		if (!isStopAlreadyInitiated()) {
+
+			ObjectHolder.ev_mqtt.mqtt_disconnect();
+
 			getLogger().debug("Stopping TLS client ...");
 			setStopAlreadyInitiated(true);
 			
