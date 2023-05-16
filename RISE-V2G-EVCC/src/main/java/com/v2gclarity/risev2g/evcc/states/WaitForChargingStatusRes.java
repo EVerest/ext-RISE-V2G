@@ -95,8 +95,10 @@ public class WaitForChargingStatusRes extends ClientState {
 			}
 
 			// *** EVerest code start ***
-			double AC_EVSEMaxCurrent = chargingStatusRes.getEVSEMaxCurrent().getValue() * Math.pow(10, chargingStatusRes.getEVSEMaxCurrent().getMultiplier());
-			ObjectHolder.ev_mqtt.publish_var("ev", "AC_EVSEMaxCurrent", AC_EVSEMaxCurrent);
+			if (chargingStatusRes.getEVSEMaxCurrent() != null) {
+				double AC_EVSEMaxCurrent = chargingStatusRes.getEVSEMaxCurrent().getValue() * Math.pow(10, chargingStatusRes.getEVSEMaxCurrent().getMultiplier());
+				ObjectHolder.ev_mqtt.publish_var("ev", "AC_EVSEMaxCurrent", AC_EVSEMaxCurrent);
+			}
 			// *** EVerest code end ***
 				
 			// Check for EVSEMaxCurrent and tell the EV
